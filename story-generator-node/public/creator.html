@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Storyteller</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="/" class="navbar-brand">
+        <h1>Storyteller</h1>
+      </a>
+      <div class="nav-switch">
+        <a href="/" class="switch-option">Stories</a>
+        <a href="/creator" class="switch-option active">Creator</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container" id="page1">
+    <header>
+      <h1>Storyteller</h1>
+      <p class="subtitle">Unleash Your Imagination with <span class="highlight-green">Uncensored</span> Storytelling!</p>
+    </header>
+
+    <main class="card">
+      <label for="idea">Main idea / prompt</label>
+      <textarea id="idea" placeholder="Describe your scene, characters or opening..."></textarea>
+
+      <div class="row">
+        <div class="col">
+          <label>Content level (pick up to 2)</label>
+          <div id="contentLevel" class="chips"></div>
+        </div>
+
+        <div class="col">
+          <label>Theme</label>
+          <select id="theme">
+            <option value="fantasy">Fantasy</option>
+            <option value="scifi">Sci-Fi</option>
+            <option value="daily">Daily life</option>
+            <option value="historical">Historical</option>
+            <option value="horror">Horror</option>
+            <option value="romance">Romance</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div class="col">
+          <label>Genres (pick up to 3)</label>
+          <div id="genres" class="chips"></div>
+        </div>
+
+        <div class="col">
+          <label>Main character types (pick up to 4)</label>
+          <div id="chars" class="chips"></div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div class="col">
+          <label>Narration style</label>
+          <select id="narration">
+            <option value="first">First person</option>
+            <option value="third_limited">Third person limited</option>
+            <option value="third_omniscient">Third person omniscient</option>
+            <option value="diary">Diary / Letter</option>
+            <option value="script">Script / Dialogue</option>
+          </select>
+        </div>
+
+        <div class="col">
+          <label>Ending type</label>
+          <select id="ending">
+            <option value="good">Good</option>
+            <option value="bad">Bad</option>
+            <option value="open">Open</option>
+            <option value="twist">Twist</option>
+            <option value="bittersweet">Bittersweet</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <button id="toggleAdvanced" class="ghost">Show Advanced Options</button>
+      </div>
+
+      <div id="advanced" style="display:none;margin-top:12px">
+        <div class="row">
+          <div class="col">
+            <label>Tone / Mood</label>
+            <select id="tone">
+              <option value="light">Lighthearted</option>
+              <option value="dark">Dark</option>
+              <option value="serious">Serious</option>
+              <option value="emotional">Emotional / Dramatic</option>
+              <option value="philosophical">Philosophical</option>
+              <option value="satirical">Satirical / Funny</option>
+              <option value="wholesome">Wholesome</option>
+            </select>
+          </div>
+
+          <div class="col">
+            <label>Perspective Focus</label>
+            <select id="perspective">
+              <option value="character">Character-driven</option>
+              <option value="plot">Plot-driven</option>
+              <option value="world">World-building-driven</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div class="col">
+            <label>Length</label>
+            <select id="length">
+              <option value="short">Short (600 words)</option>
+              <option value="medium" selected>Medium (1200 words)</option>
+              <option value="long">Long (2500 words)</option>
+            </select>
+          </div>
+
+          <div class="col">
+            <label>Twist option</label>
+            <select id="twist">
+              <option value="none">None</option>
+              <option value="minor">Minor twist</option>
+              <option value="major">Major twist</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <footer style="margin-top:24px;display:flex;justify-content:space-between;align-items:center">
+        <div class="status-text" id="status">Ready</div>
+        <div>
+          <button id="saveBtn" class="btn-primary">Create Story</button>
+        </div>
+      </footer>
+
+      <div id="result" style="margin-top:16px;word-break:break-all"></div>
+    </main>
+  </div>
+
+  <div class="editor-container" id="page2" style="display:none;">
+    <div class="editor-header">
+      <button id="backBtn" class="btn-back">← Back to Config</button>
+      <h2>Your Story</h2>
+      <div class="editor-actions">
+        <button id="regenerateBtn" class="btn-secondary">Regenerate</button>
+        <button id="exportBtn" class="btn-secondary">Export</button>
+        <button id="publishBtn" class="btn-primary">Publish Story</button>
+      </div>
+    </div>
+
+    <div class="editor-layout">
+      <div class="editor-main">
+        <div class="editor-toolbar">
+          <span class="word-count" id="wordCount">0 words</span>
+          <span class="image-hint">💡 Select text to generate images</span>
+        </div>
+        <div id="storyEditor" class="story-textarea" contenteditable="true" data-placeholder="Your story will appear here..."></div>
+      </div>
+
+      <div class="editor-sidebar">
+        <div class="config-header">
+          <h3>Story Config</h3>
+          <button id="toggleConfig" class="btn-toggle">▼</button>
+        </div>
+        <div id="storyConfig" class="config-display" style="display:none;"></div>
+        <div class="generation-status">
+          <div id="generationStatus">Ready to generate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Publish Modal -->
+  <div id="publishModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Publish Your Story</h2>
+        <button id="closeModal" class="btn-close-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <label for="storyTitle">Story Title</label>
+        <input type="text" id="storyTitle" placeholder="Enter story title..." />
+
+        <label for="authorName">Author Name</label>
+        <input type="text" id="authorName" placeholder="Your name..." />
+
+        <label for="storyDescription">Short Description</label>
+        <textarea id="storyDescription" placeholder="Brief description of your story (3-4 sentences)..." rows="4"></textarea>
+
+        <label for="coverImageUrl">Cover Image URL (optional)</label>
+        <input type="text" id="coverImageUrl" placeholder="https://..." />
+
+        <div id="publishStatus" class="status-text"></div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelPublish" class="btn-secondary">Cancel</button>
+        <button id="confirmPublish" class="btn-primary">Publish Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eternal AI - Agentic Playground</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a1a;
+            color: #e0e0e0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .header-left h1 {
+            color: #8b7fff;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .header-left p {
+            color: #999;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        .header-right {
+            min-width: 300px;
+        }
+
+        .header-right label {
+            display: block;
+            color: #8b7fff;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .header-right input {
+            width: 100%;
+            background: #0f0f1e;
+            border: 1px solid #2a2a3e;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.2;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .header-right input:focus {
+            outline: none;
+            border-color: #8b7fff;
+            box-shadow: 0 0 0 3px rgba(139, 127, 255, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #2a2a3e;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #999;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            color: #8b7fff;
+            background: rgba(139, 127, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #8b7fff;
+            border-bottom-color: #8b7fff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-area {
+            background: #0f0f1e;
+            border: 2px dashed #3a3a5a;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+        }
+
+        .upload-area:hover {
+            border-color: #8b7fff;
+            background: rgba(139, 127, 255, 0.05);
+        }
+
+        .upload-area.has-image {
+            border-style: solid;
+            border-color: #8b7fff;
+            background: rgba(139, 127, 255, 0.08);
+        }
+
+        .upload-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 1rem;
+            box-shadow: 0 4px 20px rgba(139, 127, 255, 0.2);
+        }
+
+        .input-section {
+            background: rgba(26, 26, 46, 0.6);
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-group label {
+            display: block;
+            color: #8b7fff;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: #0f0f1e;
+            border: 1px solid #2a2a3e;
+            border-radius: 6px;
+            padding: 0.75rem 1rem;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.2;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #8b7fff;
+            box-shadow: 0 0 0 3px rgba(139, 127, 255, 0.1);
+        }
+
+        .prompt-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: stretch;
+        }
+
+        .prompt-input-wrapper {
+            flex: 1;
+        }
+
+        .btn {
+            background: #8b7fff;
+            color: #ffffff;
+            border: 1px solid #8b7fff;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(139, 127, 255, 0.2);
+            line-height: 1.2;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #7066cc;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 127, 255, 0.3);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #6a6a8a;
+        }
+
+        .btn-secondary {
+            background: #3a3a5a;
+            border-color: #3a3a5a;
+            box-shadow: 0 2px 8px rgba(58, 58, 90, 0.2);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #4a4a6a;
+            border-color: #4a4a6a;
+            box-shadow: 0 4px 12px rgba(58, 58, 90, 0.3);
+        }
+
+        .btn-secondary:disabled {
+            background: #2a2a4a;
+            border-color: #2a2a4a;
+        }
+
+        .result-area {
+            background: #1a1a2e;
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            padding: 2rem;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .result-area img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(139, 127, 255, 0.25);
+        }
+
+        .placeholder {
+            color: #666;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        .placeholder p {
+            margin: 0.5rem 0;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: #1a1a2e;
+            border-left: 1px solid #2a2a3e;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #2a2a3e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-header h2 {
+            color: #8b7fff;
+            font-size: 1.2rem;
+        }
+
+        .btn-export {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .history-item {
+            background: #0f0f1e;
+            border: 1px solid #2a2a3e;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            border-color: #8b7fff;
+            background: rgba(139, 127, 255, 0.05);
+            transform: translateX(-4px);
+        }
+
+        .history-item.active {
+            border-color: #8b7fff;
+            background: rgba(139, 127, 255, 0.1);
+            box-shadow: 0 2px 8px rgba(139, 127, 255, 0.2);
+        }
+
+        .history-item-id {
+            color: #8b7fff;
+            font-size: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .history-item-id:hover {
+            background: rgba(139, 127, 255, 0.15);
+            transform: scale(1.05);
+        }
+
+        .history-item-id:active {
+            transform: scale(0.98);
+        }
+
+        .copy-feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(139, 127, 255, 0.95);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(139, 127, 255, 0.4);
+            z-index: 1000;
+            animation: fadeInOut 1.5s ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            80% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+        }
+
+        .history-item-prompt {
+            color: #e0e0e0;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-item-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .queue-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
+            padding: 0.6rem 0.75rem;
+            background: rgba(139, 127, 255, 0.08);
+            border-radius: 6px;
+            border-left: 3px solid #8b7fff;
+        }
+
+        .queue-info span {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-pending {
+            background: #ffaa44;
+            animation: pulse 2s infinite;
+        }
+
+        .status-processing {
+            background: #66aaff;
+            animation: pulse 2s infinite;
+        }
+
+        .status-queued {
+            background: #ffaa44;
+            animation: pulse 2s infinite;
+        }
+
+        .status-success {
+            background: #00dd77;
+        }
+
+        .status-error {
+            background: #ff5555;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #2a2a3e;
+            border-radius: 3px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b7fff 0%, #a89fff 100%);
+            border-radius: 3px;
+            transition: width 0.5s ease-out;
+            box-shadow: 0 0 10px rgba(139, 127, 255, 0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.1);
+            }
+        }
+
+        .history-list::-webkit-scrollbar,
+        .main-container::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .history-list::-webkit-scrollbar-track,
+        .main-container::-webkit-scrollbar-track {
+            background: #0f0f1e;
+            border-radius: 5px;
+        }
+
+        .history-list::-webkit-scrollbar-thumb,
+        .main-container::-webkit-scrollbar-thumb {
+            background: #2a2a3e;
+            border-radius: 5px;
+            border: 2px solid #0f0f1e;
+        }
+
+        .history-list::-webkit-scrollbar-thumb:hover,
+        .main-container::-webkit-scrollbar-thumb:hover {
+            background: #8b7fff;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .sidebar {
+                width: 300px;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-right {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .prompt-row {
+                flex-wrap: wrap;
+            }
+
+            .btn {
+                flex: 1;
+                min-width: 140px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <div class="header-left">
+                <h1>// Eternal Agentic Playground</h1>
+                <p>// No limits. No censorship.</p>
+            </div>
+            <div class="header-right">
+                <label>API Key</label>
+                <input type="password" id="apiKey" placeholder="Enter your API key...">
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('generate')">🚀 Generate Image</button>
+            <button class="tab-btn" onclick="switchTab('edit')">✏️ Edit Image</button>
+            <button class="tab-btn" onclick="switchTab('video')">🎬 Generate Video</button>
+        </div>
+
+        <!-- Generate Image Tab -->
+        <div id="generateTab" class="tab-content active">
+            <div class="input-section">
+                <div class="input-group">
+                    <label>Prompt</label>
+                    <div class="prompt-row">
+                        <div class="prompt-input-wrapper">
+                            <input type="text" id="promptInput" placeholder="Describe your image...">
+                        </div>
+                        <button class="btn btn-secondary" onclick="magicPrompt()">✨ Magic Prompt</button>
+                        <button class="btn" id="generateBtn" onclick="submitPrompt()">🚀 Generate Image</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-area" id="resultArea">
+                <div class="placeholder">
+                    <p>// Your generated images will appear here</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Image Tab -->
+        <div id="editTab" class="tab-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label>Upload Image</label>
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('imageUpload').click()">
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                        <p id="uploadText">📁 Click to upload or drag & drop an image</p>
+                        <img id="uploadPreview" class="upload-preview" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Edit Prompt</label>
+                    <div class="prompt-row">
+                        <div class="prompt-input-wrapper">
+                            <input type="text" id="editPromptInput" placeholder="Describe how to modify the image...">
+                        </div>
+                        <button class="btn" onclick="submitEditPrompt()">✏️ Edit Image</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-area" id="editResultArea">
+                <div class="placeholder">
+                    <p>// Your edited images will appear here</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Video Tab -->
+        <div id="videoTab" class="tab-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label>Reference Image</label>
+                    <div class="upload-area" id="videoUploadArea" onclick="document.getElementById('videoImageUpload').click()">
+                        <input type="file" id="videoImageUpload" accept="image/*" style="display: none;" onchange="handleVideoImageUpload(event)">
+                        <p id="videoUploadText">📁 Click to upload or drag & drop a reference image</p>
+                        <img id="videoUploadPreview" class="upload-preview" style="display: none;">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Prompt</label>
+                    <div class="prompt-row">
+                        <div class="prompt-input-wrapper">
+                            <input type="text" id="videoPromptInput" placeholder="Describe the motion/transformation...">
+                        </div>
+                        <button class="btn" onclick="submitVideoPrompt()">🎬 Generate Video</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-area" id="videoResultArea">
+                <div class="placeholder">
+                    <p>// Your generated videos will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>History Queue</h2>
+            <button class="btn btn-secondary btn-export" onclick="exportHistory()">📥 Export</button>
+        </div>
+        <div class="history-list" id="historyList">
+            <div class="placeholder">
+                <p>No requests yet...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const POST_URL = "https://agent-api.eternalai.org/prompt";
+        const GET_URL = "https://agent-api.eternalai.org/result";
+        const POST_URL_AGENTIC = "https://agentic.eternalai.org/prompt";
+        const GET_URL_AGENTIC = "https://agentic.eternalai.org/result";
+
+        let historyItems = [];
+        let activeItemId = null;
+        let pollingIntervals = {};
+        let uploadedImageBase64 = null;
+        let uploadedImageFilename = null;
+        let uploadedVideoRefBase64 = null;
+        let uploadedVideoRefFilename = null;
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            if (tabName === 'generate') {
+                document.getElementById('generateTab').classList.add('active');
+            } else if (tabName === 'edit') {
+                document.getElementById('editTab').classList.add('active');
+            } else if (tabName === 'video') {
+                document.getElementById('videoTab').classList.add('active');
+            }
+        }
+
+        // Handle image upload and convert to base64
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Check if file is an image
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload a valid image file');
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const base64String = e.target.result;
+                uploadedImageBase64 = base64String;
+                uploadedImageFilename = file.name;
+
+                // Show preview
+                const preview = document.getElementById('uploadPreview');
+                const uploadText = document.getElementById('uploadText');
+                const uploadArea = document.getElementById('uploadArea');
+
+                preview.src = base64String;
+                preview.style.display = 'block';
+                uploadText.textContent = `✅ ${file.name}`;
+                uploadArea.classList.add('has-image');
+            };
+
+            reader.onerror = function() {
+                alert('Error reading file');
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // Handle reference image upload for video tab
+        function handleVideoImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload a valid image file');
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const base64String = e.target.result;
+                uploadedVideoRefBase64 = base64String;
+                uploadedVideoRefFilename = file.name;
+
+                const preview = document.getElementById('videoUploadPreview');
+                const uploadText = document.getElementById('videoUploadText');
+                const uploadArea = document.getElementById('videoUploadArea');
+
+                preview.src = base64String;
+                preview.style.display = 'block';
+                uploadText.textContent = `✅ ${file.name}`;
+                uploadArea.classList.add('has-image');
+            };
+
+            reader.onerror = function() {
+                alert('Error reading file');
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // Submit generate video prompt
+        async function submitVideoPrompt() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const prompt = document.getElementById('videoPromptInput').value.trim();
+
+            if (!apiKey) {
+                alert('Please enter your API key');
+                return;
+            }
+
+            if (!uploadedVideoRefBase64) {
+                alert('Please upload a reference image first');
+                return;
+            }
+
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+
+            try {
+                const response = await fetch(POST_URL_AGENTIC, {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'x-api-key': apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'image_url',
+                                    image_url: {
+                                        url: uploadedVideoRefBase64,
+                                        filename: uploadedVideoRefFilename
+                                    }
+                                },
+                                { type: 'text', text: prompt }
+                            ]
+                        }],
+                        agent: 'uncensored-image-to-video'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const requestId = data.request_id;
+
+                const historyItem = {
+                    id: requestId,
+                    prompt: `[VIDEO] ${prompt}`,
+                    status: 'pending',
+                    progress: 0,
+                    resultUrl: null,
+                    timestamp: new Date(),
+                    agentType: 'uncensored-image-to-video',
+                    queueInfo: null
+                };
+
+                historyItems.unshift(historyItem);
+                saveHistory();
+                updateHistoryList();
+
+                startPolling(requestId, apiKey);
+
+                document.getElementById('videoPromptInput').value = '';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to submit video prompt: ' + error.message);
+            }
+        }
+
+        // Submit edit image prompt
+        async function submitEditPrompt() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const prompt = document.getElementById('editPromptInput').value.trim();
+
+            if (!apiKey) {
+                alert('Please enter your API key');
+                return;
+            }
+
+            if (!uploadedImageBase64) {
+                alert('Please upload an image first');
+                return;
+            }
+
+            if (!prompt) {
+                alert('Please enter an edit prompt');
+                return;
+            }
+
+            try {
+                const response = await fetch(POST_URL, {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'x-api-key': apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: "user",
+                            content: [
+                                {
+                                    type: "image_url",
+                                    image_url: {
+                                        url: uploadedImageBase64,
+                                        filename: uploadedImageFilename
+                                    }
+                                },
+                                {
+                                    type: "text",
+                                    text: prompt
+                                }
+                            ]
+                        }],
+                        agent: "uncensored-reimagine"
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const requestId = data.request_id;
+
+                // Add to history
+                const historyItem = {
+                    id: requestId,
+                    prompt: `[EDIT] ${prompt}`,
+                    status: 'pending',
+                    progress: 0,
+                    resultUrl: null,
+                    timestamp: new Date(),
+                    agentType: 'uncensored-reimagine',
+                    queueInfo: null
+                };
+
+                historyItems.unshift(historyItem);
+                saveHistory();
+                updateHistoryList();
+
+                // Start polling for this request
+                startPolling(requestId, apiKey);
+
+                // Clear input
+                document.getElementById('editPromptInput').value = '';
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to submit edit prompt: ' + error.message);
+            }
+        }
+
+        // Load history from localStorage on page load
+        function loadHistory() {
+            try {
+                const saved = localStorage.getItem('eai_history');
+                if (saved) {
+                    historyItems = JSON.parse(saved);
+                    // Convert timestamp strings back to Date objects
+                    historyItems.forEach(item => {
+                        item.timestamp = new Date(item.timestamp);
+                    });
+                    updateHistoryList();
+
+                    // Resume polling for pending items
+                    const apiKey = document.getElementById('apiKey').value.trim();
+                    if (apiKey) {
+                        historyItems.forEach(item => {
+                            if (item.status === 'pending') {
+                                startPolling(item.id, apiKey);
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        // Save history to localStorage
+        function saveHistory() {
+            try {
+                localStorage.setItem('eai_history', JSON.stringify(historyItems));
+            } catch (error) {
+                console.error('Error saving history:', error);
+            }
+        }
+
+        // Export history as log file
+        function exportHistory() {
+            if (historyItems.length === 0) {
+                alert('No history to export');
+                return;
+            }
+
+            const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            const filename = `history_${date}.log`;
+
+            let logContent = `# Eternal AI Image Generation History\n`;
+            logContent += `# Generated: ${new Date().toISOString()}\n\n`;
+
+            historyItems.forEach((item, index) => {
+                logContent += `[${index + 1}] Request ID: ${item.id}\n`;
+                logContent += `Timestamp: ${item.timestamp}\n`;
+                logContent += `Status: ${item.status}\n`;
+                logContent += `Prompt: ${item.prompt}\n`;
+                if (item.resultUrl) {
+                    logContent += `Image URL: ${item.resultUrl}\n`;
+                }
+                logContent += `\n${'='.repeat(80)}\n\n`;
+            });
+
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function getAgentType() {
+            // Always use uncensored-imagine for generate image
+            return 'uncensored-imagine';
+        }
+
+        // Format estimated wait time from seconds
+        function formatWaitTime(seconds) {
+            if (seconds < 60) {
+                return `${seconds}s`;
+            } else if (seconds < 3600) {
+                const minutes = Math.ceil(seconds / 60);
+                return `${minutes}m`;
+            } else {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.ceil((seconds % 3600) / 60);
+                return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+            }
+        }
+
+        // Copy request ID to clipboard
+        function copyRequestId(event, requestId) {
+            event.stopPropagation(); // Prevent triggering displayResult
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(requestId).then(() => {
+                // Show feedback message
+                const feedback = document.createElement('div');
+                feedback.className = 'copy-feedback';
+                feedback.textContent = '✓ Request ID copied';
+                document.body.appendChild(feedback);
+
+                // Remove after animation
+                setTimeout(() => {
+                    feedback.remove();
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy request ID');
+            });
+        }
+
+        async function submitPrompt() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const prompt = document.getElementById('promptInput').value.trim();
+
+            if (!apiKey) {
+                alert('Please enter your API key');
+                return;
+            }
+
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+
+            const agentType = getAgentType();
+
+            try {
+                const response = await fetch(POST_URL, {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'x-api-key': apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: "user",
+                            content: [{ type: "text", text: prompt }]
+                        }],
+                        agent: agentType
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const requestId = data.request_id;
+
+                // Add to history
+                const historyItem = {
+                    id: requestId,
+                    prompt: prompt,
+                    status: 'pending',
+                    progress: 0,
+                    resultUrl: null,
+                    timestamp: new Date(),
+                    agentType: agentType,
+                    queueInfo: null
+                };
+
+                historyItems.unshift(historyItem);
+                saveHistory();
+                updateHistoryList();
+
+                // Start polling for this request
+                startPolling(requestId, apiKey);
+
+                // Clear input
+                document.getElementById('promptInput').value = '';
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to submit prompt: ' + error.message);
+            }
+        }
+
+        function startPolling(requestId, apiKey) {
+            // Don't start if already polling
+            if (pollingIntervals[requestId]) {
+                return;
+            }
+
+            const item = historyItems.find(h => h.id === requestId);
+            if (!item) return;
+
+            const agentType = item.agentType || getAgentType();
+
+            const interval = setInterval(async () => {
+                try {
+                    const resultBase = (agentType === 'uncensored-image-to-video') ? GET_URL_AGENTIC : GET_URL;
+                    const response = await fetch(`${resultBase}?agent=${agentType}&request_id=${requestId}`, {
+                        method: 'GET',
+                        headers: {
+                            'accept': 'application/json',
+                            'x-api-key': apiKey,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    const item = historyItems.find(h => h.id === requestId);
+
+                    if (!item) return;
+
+                    // Update status if it changed
+                    if (data.status) {
+                        item.status = data.status;
+                    }
+
+                    // Update queue info if available
+                    if (data.queue_info) {
+                        item.queueInfo = data.queue_info;
+                    }
+
+                    if (data.status === 'success') {
+                        item.resultUrl = data.result_url || data.result_image_url || data.result_video_url || '';
+                        item.progress = 100;
+                        item.queueInfo = null; // Clear queue info on success
+                        clearInterval(pollingIntervals[requestId]);
+                        delete pollingIntervals[requestId];
+
+                        saveHistory();
+
+                        // Auto-display if this is the most recent
+                        if (historyItems[0].id === requestId) {
+                            displayResult(requestId);
+                        }
+                    } else if (data.status === 'error') {
+                        item.progress = 0;
+                        item.queueInfo = null; // Clear queue info on error
+                        clearInterval(pollingIntervals[requestId]);
+                        delete pollingIntervals[requestId];
+                        saveHistory();
+                    } else {
+                        // Update progress based on actual data or simulate
+                        if (data.progress !== undefined && data.progress !== null) {
+                            item.progress = data.progress;
+                        } else if (data.status === 'processing') {
+                            item.progress = Math.max(item.progress, 50);
+                        } else if (data.status === 'queued') {
+                            item.progress = 10;
+                        }
+                        saveHistory();
+                    }
+
+                    updateHistoryList();
+
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 5000); // Poll every 5 seconds
+
+            pollingIntervals[requestId] = interval;
+        }
+
+        function updateHistoryList() {
+            const historyList = document.getElementById('historyList');
+
+            if (historyItems.length === 0) {
+                historyList.innerHTML = '<div class="placeholder"><p>No requests yet...</p></div>';
+                return;
+            }
+
+            historyList.innerHTML = historyItems.map(item => {
+                let queueInfoHtml = '';
+                if (item.queueInfo) {
+                    const { queue_position, total_queue_size, estimated_wait_time } = item.queueInfo;
+                    queueInfoHtml = `
+                        <div class="queue-info">
+                            <span>📊 Queue: ${queue_position}/${total_queue_size}</span>
+                            ${estimated_wait_time ? `<span>⏱️ ~${formatWaitTime(estimated_wait_time)}</span>` : ''}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="history-item ${activeItemId === item.id ? 'active' : ''}"
+                         onclick="displayResult('${item.id}')">
+                        <div class="history-item-id" onclick="copyRequestId(event, '${item.id}')" title="Click to copy full ID">
+                            📋 ID: ${item.id.substring(0, 8)}...
+                        </div>
+                        <div class="history-item-prompt">${item.prompt}</div>
+                        <div class="history-item-status">
+                            <span class="status-dot status-${item.status}"></span>
+                            <span>${item.status} ${item.progress > 0 ? `(${item.progress}%)` : ''}</span>
+                        </div>
+                        ${queueInfoHtml}
+                        ${(item.status === 'pending' || item.status === 'processing' || item.status === 'queued') ? `
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${item.progress}%"></div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function displayResult(requestId) {
+            const item = historyItems.find(h => h.id === requestId);
+            if (!item) return;
+
+            activeItemId = requestId;
+
+            // Determine which result area to use based on agent type
+            const isEditTask = item.agentType === 'uncensored-reimagine';
+            const isVideoTask = item.agentType === 'uncensored-image-to-video';
+            const resultAreaId = isEditTask ? 'editResultArea' : (isVideoTask ? 'videoResultArea' : 'resultArea');
+            const resultArea = document.getElementById(resultAreaId);
+
+            if (item.status === 'success' && item.resultUrl) {
+                if (isVideoTask) {
+                    resultArea.innerHTML = `
+                        <video src="${item.resultUrl}" controls style="max-width: 100%; max-height: 100%; border-radius: 8px; box-shadow: 0 4px 20px rgba(139, 127, 255, 0.25);"></video>
+                        <p style="margin-top: 1rem; color: #888; font-size: 0.9rem;">${item.prompt}</p>
+                    `;
+                } else {
+                    resultArea.innerHTML = `
+                        <img src="${item.resultUrl}" alt="Generated image">
+                        <p style="margin-top: 1rem; color: #888; font-size: 0.9rem;">${item.prompt}</p>
+                    `;
+                }
+            } else if (item.status === 'error') {
+                resultArea.innerHTML = `
+                    <div class="placeholder">
+                        <p style="color: #ff4444;">❌ Error ${isEditTask ? 'editing' : (isVideoTask ? 'generating' : 'generating')} ${isVideoTask ? 'video' : 'image'}</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.9rem;">${item.prompt}</p>
+                    </div>
+                `;
+            } else {
+                let queueDisplay = '';
+                if (item.queueInfo) {
+                    const { queue_position, total_queue_size, estimated_wait_time } = item.queueInfo;
+                    queueDisplay = `
+                        <p style="margin-top: 1rem; font-size: 0.85rem; color: #999;">
+                            Queue: ${queue_position}/${total_queue_size}
+                            ${estimated_wait_time ? ` • ~${formatWaitTime(estimated_wait_time)}` : ''}
+                        </p>
+                    `;
+                }
+
+                const statusText = item.status === 'queued' ? '⏳ Queued...' :
+                                   item.status === 'processing' ? '⚙️ Processing...' :
+                                   '⏳ Loading...';
+
+                resultArea.innerHTML = `
+                    <div class="placeholder">
+                        <p>${statusText}</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.9rem;">${item.prompt}</p>
+                        ${queueDisplay}
+                        <div class="progress-bar" style="width: 200px; margin-top: 1rem;">
+                            <div class="progress-fill" style="width: ${item.progress}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            updateHistoryList();
+        }
+
+        async function magicPrompt() {
+            const promptInput = document.getElementById('promptInput');
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const currentPrompt = promptInput.value.trim();
+            const magicBtn = event.currentTarget;
+
+            if (!apiKey) {
+                alert('Please enter your API key');
+                return;
+            }
+            if (!currentPrompt) {
+                alert('Please enter a base prompt first');
+                return;
+            }
+
+            // Disable magic button and show loading state
+            magicBtn.disabled = true;
+            const originalBtnText = magicBtn.innerHTML;
+            magicBtn.innerHTML = '⏳ Loading...';
+
+            // Disable generate image button
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = true;
+        
+            // Hướng dẫn FLUX Prompt Framework (nén gọn để gửi)
+            const fluxGuidelines = `
+        # Quick Reference - FLUX Text-to-Image Prompting
+        ## FLUX Prompt Framework
+        Use this structure: **Subject + Action + Style + Context**
+        - **Subject**: Main focus (person, object, character)
+        - **Action**: What the subject is doing or their pose
+        - **Style**: Artistic approach, medium, or aesthetic
+        - **Context**: Setting, lighting, time, mood, or atmospheric conditions
+        ## Enhancement Layers
+        - **Foundation**: Subject + Action + Style + Context
+        - **Visual Layer**: Specific lighting, color palette, composition
+        - **Technical Layer**: Camera settings, lens specs, quality markers
+        - **Atmospheric Layer**: Mood, emotional tone, narrative
+        ## Optimal Prompt Length
+        - Medium (30-80 words): Ideal for most projects
+        ## Avoiding Negative Prompts
+        Use positive alternatives (e.g., "peaceful solitude" instead of "no crowds").
+        ## Quick Templates
+        - **Architecture**: [Building/space], [perspective], [lighting], [style], [mood]
+        ## Professional Photography Control
+        - **Aperture (f-numbers)**: Small (f/1.4) for blurred background; large (f/8) for sharp.
+        - **Focal length (mm)**: Small (24mm) for wide scenes; large (85mm) for zoomed-in.
+        - **Lighting**: E.g., "golden hour" for warm atmosphere.
+        `;
+        
+            const payload = {
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "text",
+                                text: `
+        ${fluxGuidelines}
+                            
+        ### Task
+        You are an expert in crafting prompts for the FLUX text-to-image model. Based on the above guidelines, expand the following original description into a detailed, accurate, and optimized prompt for image generation.
+                            
+        - Apply the structure: Subject + Action + Style + Context.
+        - Add enhancement layers if needed: Visual, Technical, Atmospheric.
+        - Prioritize key elements first.
+        - Use positive, descriptive language, avoiding negative prompts.
+        - Target prompt length: 30-80 words.
+        - Output only the enhanced prompt, no additional explanation.
+                            
+        ### Original Description
+        "${currentPrompt}"
+        `
+                            }
+                        ]
+                    }
+                ],
+                agent: "uncensored-chat",
+                stream: true
+            };
+        
+            try {
+                const response = await fetch("https://agentic.eternalai.org/prompt", {
+                    method: "POST",
+                    headers: {
+                        "accept": "text/event-stream",
+                        "x-api-key": apiKey,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+            
+                if (!response.ok || !response.body) {
+                    throw new Error(`HTTP error! Status ${response.status}`);
+                }
+            
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+                let done = false;
+            
+                while (!done) {
+                    const { value, done: streamDone } = await reader.read();
+                    if (streamDone) {
+                        done = true;
+                        break;
+                    }
+                    const chunk = decoder.decode(value);
+                
+                    // Streaming data processing (Server-Sent Events)
+                    const lines = chunk.split("\n\n");
+                    for (let line of lines) {
+                        line = line.trim();
+                        if (!line.startsWith("data:")) continue;
+                        if (line === "data: [DONE]") {
+                            done = true;
+                            break;
+                        }
+                        try {
+                            const jsonData = JSON.parse(line.substring(5).trim());
+                            const choices = jsonData.choices || [];
+                            for (const choice of choices) {
+                                const delta = choice.delta || {};
+                                const piece = delta.content || "";
+                                if (piece) {
+                                    // Accumulate raw text (keep everything for proper tag matching)
+                                    fullText += piece;
+                                }
+                            }
+                        } catch (err) {
+                            console.warn("Skipping invalid JSON line:", line);
+                        }
+                    }
+                }
+            
+                // update input and prompt
+                const finalPrompt = (fullText.trim() || currentPrompt)
+                    .replace(/<think>.*?<\/think>/gs, "")
+                    .replace(/\r?\n/g, " ")
+                    .trim();
+                promptInput.value = finalPrompt;
+
+            } catch (error) {
+                console.error("Magic Prompt error:", error);
+                alert("Failed to generate enhanced FLUX prompt: " + error.message);
+                promptInput.value = currentPrompt;
+            } finally {
+                // Re-enable magic button
+                magicBtn.disabled = false;
+                magicBtn.innerHTML = originalBtnText;
+
+                // Re-enable generate image button
+                generateBtn.disabled = false;
+            }
+        }
+
+        // Keyboard shortcuts
+        document.getElementById('promptInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitPrompt();
+            }
+        });
+
+        document.getElementById('editPromptInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitEditPrompt();
+            }
+        });
+
+        document.getElementById('videoPromptInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitVideoPrompt();
+            }
+        });
+
+        // Drag and drop support for image upload
+        const uploadArea = document.getElementById('uploadArea');
+        const videoUploadArea = document.getElementById('videoUploadArea');
+
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.style.borderColor = '#8b7fff';
+            uploadArea.style.background = '#1a1a2e';
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!uploadArea.classList.contains('has-image')) {
+                uploadArea.style.borderColor = '#2a2a3e';
+                uploadArea.style.background = '#0f0f1e';
+            }
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.style.borderColor = '#2a2a3e';
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    // Manually trigger the file input
+                    const input = document.getElementById('imageUpload');
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    input.files = dt.files;
+                    handleImageUpload({ target: input });
+                } else {
+                    alert('Please upload a valid image file');
+                }
+            }
+        });
+
+        // Drag and drop support for video reference image upload
+        videoUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            videoUploadArea.style.borderColor = '#8b7fff';
+            videoUploadArea.style.background = '#1a1a2e';
+        });
+
+        videoUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!videoUploadArea.classList.contains('has-image')) {
+                videoUploadArea.style.borderColor = '#2a2a3e';
+                videoUploadArea.style.background = '#0f0f1e';
+            }
+        });
+
+        videoUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            videoUploadArea.style.borderColor = '#2a2a3e';
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    const input = document.getElementById('videoImageUpload');
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    input.files = dt.files;
+                    handleVideoImageUpload({ target: input });
+                } else {
+                    alert('Please upload a valid image file');
+                }
+            }
+        });
+
+        // Load history on page load
+        window.addEventListener('DOMContentLoaded', loadHistory);
+    </script>
+</body>
+</html>

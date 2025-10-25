@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Story - Storyteller</title>
+  <link rel="stylesheet" href="story-styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="/" class="navbar-brand">
+        <h1>Storyteller</h1>
+      </a>
+      <div class="nav-switch">
+        <a href="/" class="switch-option">Stories</a>
+        <a href="/creator" class="switch-option">Creator</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="story-header">
+    <div class="story-meta" id="storyMeta">
+      <!-- Metadata will be loaded here -->
+    </div>
+  </header>
+
+  <main class="story-content" id="storyContent">
+    <div class="loading">Loading story...</div>
+  </main>
+
+  <footer class="story-footer">
+    <a href="/" class="btn-primary">Back to Stories</a>
+    <a href="/creator" class="btn-secondary">Create Your Own</a>
+  </footer>
+
+  <script src="story.js"></script>
+</body>
+</html>
