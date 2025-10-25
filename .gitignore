@@ -1,0 +1,6 @@
+story-generator-node/node_modules/
+story-generator-node/data/
+story-generator-node/*.log
+story-generator-node/.env
+story-generator-node/.DS_Store
+story-generator-node/app_config.json
