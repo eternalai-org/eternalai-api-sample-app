@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>The Dream Oracle - Mystical Dream Divination</title>
+    <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0a14;
+            color: #ba55d3;
+            font-family: 'Georgia', serif;
+            overflow-x: hidden;
+        }
+        #radialVis {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            opacity: 0.3;
+        }
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        h1 {
+            font-size: 42px;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(138, 43, 226, 0.8);
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 16px;
+            color: #9370db;
+            margin-bottom: 40px;
+        }
+        .input-section {
+            background: rgba(20, 0, 40, 0.8);
+            border: 2px solid #8a2be2;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);
+        }
+        label {
+            display: block;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #ba55d3;
+        }
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            background: rgba(10, 10, 20, 0.9);
+            border: 2px solid #6a2ba2;
+            border-radius: 10px;
+            padding: 15px;
+            color: #ba55d3;
+            font-family: 'Georgia', serif;
+            font-size: 16px;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #8a2be2;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.5);
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        button {
+            background: linear-gradient(135deg, #8a2be2, #6a2ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.6);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 16px;
+            min-height: 24px;
+        }
+        .output-section {
+            display: none;
+            background: rgba(20, 0, 40, 0.8);
+            border: 2px solid #8a2be2;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.3);
+        }
+        .output-section.visible {
+            display: block;
+        }
+        #storyContent {
+            background: rgba(10, 10, 20, 0.9);
+            border: 2px solid #6a2ba2;
+            border-radius: 10px;
+            padding: 25px;
+            color: #d8bfd8;
+            font-size: 16px;
+            line-height: 1.8;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .image-container {
+            background: rgba(10, 10, 20, 0.9);
+            border: 2px solid #6a2ba2;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        .image-container img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .image-container .status {
+            font-size: 14px;
+            color: #9370db;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading dotlottie-wc {
+            margin: 0 auto;
+        }
+        .loading-text {
+            margin-top: 10px;
+            color: #ba55d3;
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(138, 43, 226, 0.6);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        #storyLoadingAnimation {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        #storyLoadingAnimation.visible {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+<canvas id="radialVis"></canvas>
+
+<div class="container">
+    <h1>🔮 The Dream Oracle 🔮</h1>
+    <p class="subtitle">Mystical interpretations from beyond the veil</p>
+
+    <div class="input-section">
+        <label for="dreamInput">Speak your vision, Seeker:</label>
+        <textarea id="dreamInput" placeholder="I wandered through a moonlit forest where ravens whispered forgotten names, and the trees bore fruits of starlight..."></textarea>
+
+        <div class="button-group">
+            <button id="generateBtn">🔮 Divine the Meaning</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <div id="storySection" class="output-section">
+        <h2 style="margin-bottom: 20px; color: #ba55d3;">✨ The Oracle Speaks ✨</h2>
+
+        <div id="oracleName" style="text-align: center; margin-bottom: 15px; display: none;">
+            <span style="display: inline-block; background: rgba(138, 43, 226, 0.2); border: 1px solid #8a2be2; border-radius: 20px; padding: 8px 20px; font-size: 14px; color: #ba55d3; font-style: italic;">
+                <span id="oracleNameText"></span>
+            </span>
+        </div>
+
+        <div id="storyLoadingAnimation">
+            <dotlottie-wc
+                src="https://lottie.host/108f7318-0557-4b90-bdee-ab15d6d14d16/Blz7j2Ilhy.lottie"
+                style="width: 300px; height: 300px"
+                autoplay
+                loop>
+            </dotlottie-wc>
+            <div class="loading-text">Channeling visions from beyond the veil...</div>
+        </div>
+
+        <div id="storyContent"></div>
+
+        <div class="button-group" style="margin-top: 20px;">
+            <button id="generateImageBtn">🌙 Manifest the Visions</button>
+        </div>
+    </div>
+
+    <div id="imagesSection" class="output-section">
+        <h2 style="margin-bottom: 20px; color: #ba55d3;">🔮 Visions Made Manifest 🔮</h2>
+        <div id="imageGrid" class="image-grid"></div>
+    </div>
+</div>
+
+<script src="scripts/radialVisualizer.js"></script>
+<script src="scripts/nightmare.js"></script>
+<script src="scripts/dreamTales.js"></script>
+</body>
+</html>
