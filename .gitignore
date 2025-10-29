@@ -1,6 +1,6 @@
-*/node_modules/
+node_modules
 */data/
-*/*.log
-*/.env
-*/.DS_Store
-*/app_config.json
+*.log
+.env
+.DS_Store
+app_config.json
