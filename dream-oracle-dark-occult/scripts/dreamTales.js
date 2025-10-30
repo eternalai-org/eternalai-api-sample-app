@@ -1,6 +1,5 @@
 // Dream Tales - AI-powered dream storytelling and visualization
 
-let apiReady = false;
 let currentStory = '';
 let generatedScenes = [];
 let currentCharacter = '';
@@ -32,26 +31,8 @@ function getRandomCharacter() {
     return CHARACTER_PROMPTS[Math.floor(Math.random() * CHARACTER_PROMPTS.length)];
 }
 
-// Load API configuration
-async function loadConfig() {
-    try {
-        const response = await fetch('/api/config');
-        if (response.ok) {
-            const config = await response.json();
-            apiReady = config.hasConfig;
-            console.log('✓ API Config loaded, ready:', apiReady);
-        } else {
-            console.error('Failed to load API config');
-        }
-    } catch (err) {
-        console.error('Error loading config:', err);
-    }
-}
-
-// Initialize
-loadConfig();
-
 // UI Elements
+const apiKeyInput = document.getElementById('apiKeyInput');
 const dreamInput = document.getElementById('dreamInput');
 const generateBtn = document.getElementById('generateBtn');
 const status = document.getElementById('status');
@@ -71,15 +52,16 @@ generateImageBtn.addEventListener('click', generateDreamImages);
 // Generate dream story using streaming API
 async function generateDreamStory() {
     const dreamPrompt = dreamInput.value.trim();
+    const apiKey = apiKeyInput.value.trim();
 
-    if (!dreamPrompt) {
-        status.textContent = '⚠️ The Oracle requires your vision, Seeker';
+    if (!apiKey) {
+        status.textContent = '⚠️ An API key is required to unlock the Oracle';
         status.style.color = '#f97316';
         return;
     }
 
-    if (!apiReady) {
-        status.textContent = '⚠️ The mystical channels are not yet aligned';
+    if (!dreamPrompt) {
+        status.textContent = '⚠️ The Oracle requires your vision, Seeker';
         status.style.color = '#f97316';
         return;
     }
@@ -123,7 +105,8 @@ Begin your interpretation with a dramatic opening that matches your character, t
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
                 messages: [{
@@ -356,10 +339,16 @@ Aesthetic Style: ${aestheticGuidance}
 
 Format: Describe the visual scene in detail with the specified aesthetic. Include: subjects, actions, atmosphere, lighting, colors, and mystical elements. Make it dreamlike, cinematic, and visually striking.`;
 
+    const apiKey = apiKeyInput.value.trim();
+    if (!apiKey) {
+        throw new Error('API key is missing');
+    }
+
     const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
             messages: [{
@@ -429,12 +418,18 @@ Format: Describe the visual scene in detail with the specified aesthetic. Includ
 
 // Generate image using API
 async function generateImage(prompt, statusContainer) {
+    const apiKey = apiKeyInput.value.trim();
+    if (!apiKey) {
+        throw new Error('API key is missing');
+    }
+
     try {
         // Submit image generation request
         const response = await fetch('/api/generate-image', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
             },
             body: JSON.stringify({
                 prompt: prompt
@@ -463,6 +458,10 @@ async function generateImage(prompt, statusContainer) {
 
 // Poll for image generation result
 async function pollForImageResult(requestId, statusContainer) {
+    const apiKey = apiKeyInput.value.trim();
+    if (!apiKey) {
+        throw new Error('API key is missing');
+    }
     const maxAttempts = 60; // 5 minutes max
     let attempts = 0;
 
@@ -473,7 +472,8 @@ async function pollForImageResult(requestId, statusContainer) {
                 {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
                     }
                 }
             );

@@ -24,24 +24,23 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from the current directory
 app.use(express.static(__dirname));
 
-// Serve config to frontend (without exposing sensitive data)
-app.get('/api/config', (req, res) => {
-    res.json({
-        hasConfig: !!appConfig.apiKey
-    });
-});
 
 // Proxy endpoint for chat API (streaming)
 app.post('/api/chat', async (req, res) => {
     try {
         const { messages, agent } = req.body;
+        const apiKey = req.headers.authorization?.split(' ')[1];
+
+        if (!apiKey) {
+            return res.status(401).json({ error: 'API key is missing' });
+        }
 
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(appConfig.apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-api-key': appConfig.apiKey
+                'x-api-key': apiKey
             },
             body: JSON.stringify({
                 messages,
@@ -71,13 +70,18 @@ app.post('/api/chat', async (req, res) => {
 app.post('/api/generate-image', async (req, res) => {
     try {
         const { prompt } = req.body;
+        const apiKey = req.headers.authorization?.split(' ')[1];
+
+        if (!apiKey) {
+            return res.status(401).json({ error: 'API key is missing' });
+        }
 
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(appConfig.imageEndpoint, {
             method: 'POST',
             headers: {
                 'accept': 'application/json',
-                'x-api-key': appConfig.apiKey,
+                'x-api-key': apiKey,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -109,6 +113,11 @@ app.post('/api/generate-image', async (req, res) => {
 app.get('/api/image-result', async (req, res) => {
     try {
         const { request_id } = req.query;
+        const apiKey = req.headers.authorization?.split(' ')[1];
+
+        if (!apiKey) {
+            return res.status(401).json({ error: 'API key is missing' });
+        }
 
         const fetch = (await import('node-fetch')).default;
         const response = await fetch(
@@ -117,7 +126,7 @@ app.get('/api/image-result', async (req, res) => {
                 method: 'GET',
                 headers: {
                     'accept': 'application/json',
-                    'x-api-key': appConfig.apiKey,
+                    'x-api-key': apiKey,
                     'Content-Type': 'application/json'
                 }
             }
