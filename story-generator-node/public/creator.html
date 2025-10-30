@@ -5,6 +5,49 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Storyteller</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    #apiKeySection {
+        
+        padding: 0;
+        border-radius: 0;
+        margin-bottom: 0;
+    }
+    #apiKeySection.key-saved #apiKeyInputGroup {
+        display: none;
+    }
+    #apiKeySection:not(.key-saved) #apiKeyDisplayGroup {
+        display: none;
+    }
+    #apiKeyInputGroup, #apiKeyDisplayGroup {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    #apiKeyDisplay {
+        font-family: monospace;
+        background: #1e1e2e;
+        padding: 8px 12px;
+        border-radius: 4px;
+        color: #a9a9a9;
+    }
+    #apiKeyInput {
+      width:100%;
+      padding:12px 16px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.12);
+      background:rgba(255,255,255,0.04);
+      color:#fff;
+      font-family:inherit;
+      font-size:15px;
+      transition:all 0.2s;
+    }
+    #apiKeyInput:focus{
+      outline:none;
+      border-color:var(--accent);
+      background:rgba(255,255,255,0.06);
+      box-shadow:0 0 0 3px rgba(168,85,247,0.1);
+    }
+  </style>
 </head>
 <body>
   <nav class="navbar">
@@ -24,6 +67,23 @@
       <h1>Storyteller</h1>
       <p class="subtitle">Unleash Your Imagination with <span class="highlight-green">Uncensored</span> Storytelling!</p>
     </header>
+
+    <div class="card" style="margin-bottom: 20px;">
+    <div id="apiKeySection">
+        <div id="apiKeyDisplayGroup">
+            
+            <span id="apiKeyDisplay"></span>
+            <button id="clearApiKeyBtn" class="btn-secondary">Clear</button>
+            <span id="apiKeyStatus"></span>
+        </div>
+        <div id="apiKeyInputGroup">
+            
+            <input type="password" id="apiKeyInput" placeholder="Enter your API key" />
+            <button id="saveApiKeyBtn" class="btn-primary">Save</button>
+            <span id="apiKeyStatus"></span>
+        </div>
+    </div>
+</div>
 
     <main class="card">
       <label for="idea">Main idea / prompt</label>
@@ -207,6 +267,7 @@
     </div>
   </div>
 
+  <script src="creator.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
