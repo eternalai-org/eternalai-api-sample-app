@@ -15,6 +15,12 @@ async function loadConfig() {
   } catch (err) {
     console.error('Failed to load API config:', err);
   }
+
+  // Explicitly check localStorage for API key and override if present
+  const storedApiKey = localStorage.getItem('apiKey');
+  if (storedApiKey) {
+    apiConfig.apiKey = storedApiKey;
+  }
 }
 
 loadConfig();
