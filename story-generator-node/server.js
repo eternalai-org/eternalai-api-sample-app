@@ -236,7 +236,6 @@ app.get('/api/story/:folder/content', async (req, res) => {
 // Serve config to frontend
 app.get('/api/config', (req, res) => {
   res.json({
-    apiKey: appConfig.apiKey,
     apiEndpoint: appConfig.apiEndpoint,
     agent: appConfig.agent
   });
