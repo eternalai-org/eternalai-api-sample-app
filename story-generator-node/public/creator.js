@@ -13,24 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (apiKey) {
             showMaskedKey(apiKey);
         } else {
-            try {
-                const response = await fetch('/api/config');
-                if (response.ok) {
-                    const config = await response.json();
-                    if (config.apiKey) {
-                        apiKey = config.apiKey;
-                        localStorage.setItem('apiKey', apiKey);
-                        showMaskedKey(apiKey);
-                    } else {
-                        showInput();
-                    }
-                } else {
-                    showInput();
-                }
-            } catch (err) {
-                console.error('Failed to load API config:', err);
-                showInput();
-            }
+            showInput();
         }
     }
 
