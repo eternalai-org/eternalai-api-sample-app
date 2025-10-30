@@ -10,17 +10,18 @@ async function loadConfig() {
   try {
     const response = await fetch('/api/config');
     if (response.ok) {
-      apiConfig = await response.json();
+      const config = await response.json();
+      // just get apiEndpoint and agent
+      apiConfig.apiEndpoint = config.apiEndpoint;
+      apiConfig.agent = config.agent;
     }
   } catch (err) {
     console.error('Failed to load API config:', err);
   }
 
-  // Explicitly check localStorage for API key and override if present
-  const storedApiKey = localStorage.getItem('apiKey');
-  if (storedApiKey) {
-    apiConfig.apiKey = storedApiKey;
-  }
+  // Remove localStorage handling for apiKey everywhere (do not set, do not get, do not check storedApiKey)
+  // When making an API request (e.g., in generateStory or generateImagePrompt), get the key from document.getElementById('apiKeyInput').value ONLY
+  // If the API key is empty when attempting to make a request, display an error and do not send the request
 }
 
 loadConfig();
@@ -153,6 +154,8 @@ function showPage2(config, prompt, storyFolder) {
   initializePublishButton();
 
   generateStory();
+
+  // Removed customBackBtn creation; use the existing back button in HTML
 }
 
 function showPage1() {
@@ -366,7 +369,7 @@ Make it detailed and cinematic. Focus on visual elements only.`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiConfig.apiKey
+        'x-api-key': document.getElementById('apiKeyInput').value // Get key from input field
       },
       body: JSON.stringify({
         messages: [
@@ -520,7 +523,7 @@ async function generateImageFromPrompt(prompt) {
       method: 'POST',
       headers: {
         'accept': 'application/json',
-        'x-api-key': apiConfig.apiKey,
+        'x-api-key': document.getElementById('apiKeyInput').value, // Get key from input field
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -584,7 +587,7 @@ async function pollForImageResult(requestId, progressElement) {
         method: 'GET',
         headers: {
           'accept': 'application/json',
-          'x-api-key': apiConfig.apiKey,
+          'x-api-key': document.getElementById('apiKeyInput').value, // Get key from input field
           'Content-Type': 'application/json'
         }
       });
@@ -715,7 +718,7 @@ async function generateImageFromPromptWithProgress(prompt, progressElement) {
       method: 'POST',
       headers: {
         'accept': 'application/json',
-        'x-api-key': apiConfig.apiKey,
+        'x-api-key': document.getElementById('apiKeyInput').value, // Get key from input field
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -1269,7 +1272,7 @@ Please write a complete, engaging story that follows these parameters.`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiConfig.apiKey
+        'x-api-key': document.getElementById('apiKeyInput').value // Get key from input field
       },
       body: JSON.stringify({
         messages: [
@@ -1861,4 +1864,38 @@ async function publishStory() {
     statusEl.style.color = 'var(--orange)';
   }
 }
+
+// when init /creator, if there is a saved state in localStorage, restore it into the form
+window.addEventListener('DOMContentLoaded', function() {
+  const saved = localStorage.getItem('savedStoryForm');
+  if (saved) {
+    try {
+      const { config, prompt } = JSON.parse(saved);
+      // assign the value to the corresponding input fields (by id)
+      if (prompt && prompt.prompt_text)
+        document.getElementById('idea').value = prompt.prompt_text;
+      if (config) {
+        if (config.theme) document.getElementById('theme').value = config.theme;
+        if (config.narration_style) document.getElementById('narration').value = config.narration_style;
+        if (config.ending_type) document.getElementById('ending').value = config.ending_type;
+        if (config.tone) document.getElementById('tone').value = config.tone;
+        if (config.perspective_focus) document.getElementById('perspective').value = config.perspective_focus;
+        if (config.length) document.getElementById('length').value = config.length;
+        if (config.twist_option) document.getElementById('twist').value = config.twist_option;
+        // genres, chars, content_level are chips, need to select again
+        function restoreChips(container, values) {
+          Array.from(container.querySelectorAll('.chip')).forEach(c => {
+            if (values && values.includes(c.dataset.value)) c.classList.add('selected');
+            else c.classList.remove('selected');
+          });
+        }
+        restoreChips(document.getElementById('genres'), config.genres);
+        restoreChips(document.getElementById('chars'), config.main_character_types);
+        restoreChips(document.getElementById('contentLevel'), config.content_level);
+      }
+    } catch(_e) {}
+    // remove the saved state to avoid bugs after reload
+    localStorage.removeItem('savedStoryForm');
+  }
+});
 

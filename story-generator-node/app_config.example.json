@@ -1,5 +1,0 @@
-{
-  "apiKey": "your_api_key_here",
-  "apiEndpoint": "https://agentic.eternalai.org/prompt",
-  "agent": "uncensored-chat"
-}
