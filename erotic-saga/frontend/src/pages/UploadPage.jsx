@@ -19,11 +19,68 @@ export default function UploadPage() {
   const [difficulties, setDifficulties] = useState(Array(4).fill(1));
   const [generatedQuestions, setGeneratedQuestions] = useState(null);
   const [generatingQuestions, setGeneratingQuestions] = useState(false);
-  const [questionsText, setQuestionsText] = useState("");
-  const [jsonError, setJsonError] = useState("");
   const [bg, setBg] = useState(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   const navigate = useNavigate();
+
+  // Validate form function
+  const validateForm = () => {
+    // Basic checks
+    if (!characterName || !apiKey || !image) {
+      setIsFormValid(false);
+      return;
+    }
+
+    // Mode-specific checks
+    if (mode === "prompts") {
+      if (prompts.some((p) => p.trim() === "")) {
+        setIsFormValid(false);
+        return;
+      }
+      setIsFormValid(true);
+    } else {
+      // Questions mode - must have questions
+      if (!generatedQuestions || generatedQuestions.length === 0) {
+        setIsFormValid(false);
+        return;
+      }
+      // Check each question is complete
+      for (const q of generatedQuestions) {
+        if (!q.question || !q.options || q.options.length !== 4 || !q.answer) {
+          setIsFormValid(false);
+          return;
+        }
+      }
+      setIsFormValid(true);
+    }
+  };
+
+  // Initialize with template when switching to questions mode
+  React.useEffect(() => {
+    if (mode === "questions" && !generatedQuestions) {
+      // Initialize with one default question
+      const defaultQuestions = [
+        {
+          id: 1,
+          question: "Your question here",
+          options: ["Option A", "Option B", "Option C", "Option D"],
+          answer: "Option A"
+        }
+      ];
+      setGeneratedQuestions(defaultQuestions);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  // Validate form whenever inputs change
+  React.useEffect(() => {
+    validateForm();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, characterName, apiKey, image, prompts, generatedQuestions]);
 
   // Load prompt suggestions on mount
   React.useEffect(() => {
@@ -66,6 +123,41 @@ export default function UploadPage() {
     }
   };
 
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        setImage(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
   const handlePromptCountChange = (e) => {
     const count = parseInt(e.target.value) || 0;
     setPromptCount(count);
@@ -83,43 +175,28 @@ export default function UploadPage() {
     setDifficulties(newDifficulties);
   };
 
-  const handleQuestionsTextChange = (e) => {
-    const text = e.target.value;
-    setQuestionsText(text);
-    
-    // Validate JSON in real-time
-    try {
-      const parsed = JSON.parse(text);
-      
-      // Check if it's an array
-      if (!Array.isArray(parsed)) {
-        setJsonError("❌ JSON must be an array");
-        return;
-      }
-      
-      // Validate structure of each question
-      for (let i = 0; i < parsed.length; i++) {
-        const q = parsed[i];
-        if (!q.id || !q.question || !q.options || !q.answer) {
-          setJsonError(`❌ Question ${i + 1} missing required fields (id, question, options, answer)`);
-          return;
-        }
-        if (!Array.isArray(q.options)) {
-          setJsonError(`❌ Question ${i + 1}: options must be an array`);
-          return;
-        }
-        if (q.options.length !== 4) {
-          setJsonError(`❌ Question ${i + 1}: must have exactly 4 options`);
-          return;
-        }
-      }
-      
-      // JSON is valid, update the questions
-      setGeneratedQuestions(parsed);
-      setJsonError("");
-    } catch (err) {
-      setJsonError(`❌ Invalid JSON: ${err.message}`);
-    }
+  // Handler to update question text
+  const handleQuestionTextChange = (index, value) => {
+    if (!generatedQuestions) return;
+    const updated = [...generatedQuestions];
+    updated[index].question = value;
+    setGeneratedQuestions(updated);
+  };
+
+  // Handler to update option text
+  const handleOptionChange = (questionIndex, optionIndex, value) => {
+    if (!generatedQuestions) return;
+    const updated = [...generatedQuestions];
+    updated[questionIndex].options[optionIndex] = value;
+    setGeneratedQuestions(updated);
+  };
+
+  // Handler to update answer
+  const handleAnswerChange = (questionIndex, value) => {
+    if (!generatedQuestions) return;
+    const updated = [...generatedQuestions];
+    updated[questionIndex].answer = value;
+    setGeneratedQuestions(updated);
   };
 
   const handleGenerateQuestions = async () => {
@@ -141,11 +218,15 @@ export default function UploadPage() {
 
       if (res.data.success) {
         setGeneratedQuestions(res.data.questions);
-        setQuestionsText(JSON.stringify(res.data.questions, null, 2));
-        setJsonError("");
+      } else {
+        throw new Error(res.data.message || "Failed to generate questions");
       }
     } catch (err) {
       console.error("❌ Generate questions error:", err);
+      // Show error modal with message
+      const errorMsg = err.response?.data?.detail || err.response?.data?.message || err.message || "Failed to generate questions. Please try again.";
+      setErrorMessage(errorMsg);
+      setShowErrorModal(true);
     } finally {
       setGeneratingQuestions(false);
     }
@@ -154,18 +235,9 @@ export default function UploadPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!characterName || !apiKey || !image) {
+    // Final validation before submit
+    if (!isFormValid) {
       return;
-    }
-
-    if (mode === "prompts") {
-      if (prompts.some((p) => p.trim() === "")) {
-        return;
-      }
-    } else {
-      if (!generatedQuestions || generatedQuestions.length === 0) {
-        return;
-      }
     }
 
     const form = new FormData();
@@ -188,12 +260,33 @@ export default function UploadPage() {
       navigate("/");
     } catch (err) {
       console.error("❌ Upload error:", err);
+      // Show error modal with message
+      const errorMsg = err.response?.data?.detail || err.response?.data?.message || "Upload failed. Please try again.";
+      setErrorMessage(errorMsg);
+      setShowErrorModal(true);
     } finally {
       setLoading(false);
     }
   };
 
   return (
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        .questions-scroll-container::-webkit-scrollbar {
+          width: 10px;
+        }
+        .questions-scroll-container::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
+        }
+        .questions-scroll-container::-webkit-scrollbar-thumb {
+          background: rgba(255, 15, 135, 0.5);
+          border-radius: 10px;
+        }
+        .questions-scroll-container::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 15, 135, 0.7);
+        }
+      `}} />
     <div
       style={{
         padding: "2rem",
@@ -243,7 +336,7 @@ export default function UploadPage() {
           style={{ display: "flex", flexDirection: "column", width: "100%" }}
         >
           {/* Enter API Key */}
-          <h3 style={{ marginBottom: "6px", fontSize: "16.8px" }}>
+          <h3 style={{ marginBottom: "8px", fontSize: "14px", color: "#fff", fontWeight: "500" }}>
             API Key
           </h3>
           <input
@@ -253,20 +346,32 @@ export default function UploadPage() {
             value={apiKey}
             required
             style={{
-              marginBottom: "10.5px",
-              padding: "5.6px",
+              marginBottom: "20px",
+              padding: "12px 16px",
               width: "100%",
-              fontSize: "16.8px",
-              borderRadius: "6px",
-              border: "1px solid #FF0F87",
-              background: "rgba(20,20,20,0.8)",
+              fontSize: "15px",
+              borderRadius: "10px",
+              border: "1px solid rgba(255, 15, 135, 0.12)",
+              background: "rgba(255, 255, 255, 0.04)",
               color: "#F2F2F2",
-              boxShadow: "0 0 10px #FF004C",
+              fontFamily: "inherit",
+              transition: "all 0.2s",
+              outline: "none",
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#FF0F87";
+              e.target.style.background = "rgba(255, 255, 255, 0.06)";
+              e.target.style.boxShadow = "0 0 0 3px rgba(255, 15, 135, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "rgba(255, 15, 135, 0.12)";
+              e.target.style.background = "rgba(255, 255, 255, 0.04)";
+              e.target.style.boxShadow = "none";
             }}
           />
 
           {/* Enter character name */}
-          <h3 style={{ marginBottom: "6px", fontSize: "16.8px" }}>
+          <h3 style={{ marginBottom: "8px", fontSize: "14px", color: "#fff", fontWeight: "500" }}>
             Character Name
           </h3>
           <input
@@ -276,54 +381,176 @@ export default function UploadPage() {
             value={characterName}
             required
             style={{
-              marginBottom: "10.5px",
-              padding: "5.6px",
+              marginBottom: "20px",
+              padding: "12px 16px",
               width: "100%",
-              fontSize: "16.8px",
-              borderRadius: "6px",
-              border: "1px solid #FF0F87",
-              background: "rgba(20,20,20,0.8)",
+              fontSize: "15px",
+              borderRadius: "10px",
+              border: "1px solid rgba(255, 15, 135, 0.12)",
+              background: "rgba(255, 255, 255, 0.04)",
               color: "#F2F2F2",
-              boxShadow: "0 0 10px #FF004C",
+              fontFamily: "inherit",
+              transition: "all 0.2s",
+              outline: "none",
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#FF0F87";
+              e.target.style.background = "rgba(255, 255, 255, 0.06)";
+              e.target.style.boxShadow = "0 0 0 3px rgba(255, 15, 135, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "rgba(255, 15, 135, 0.12)";
+              e.target.style.background = "rgba(255, 255, 255, 0.04)";
+              e.target.style.boxShadow = "none";
             }}
           />
 
           {/* Choose character image */}
-          <h3 style={{ marginBottom: "6px", fontSize: "16.8px" }}>
+          <h3 style={{ marginBottom: "8px", fontSize: "14px", color: "#fff", fontWeight: "500" }}>
             Character Image
           </h3>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            required
-            style={{
-              marginBottom: "10.5px",
-              padding: "5.6px",
-              fontSize: "16.8px",
-              background: "rgba(20,20,20,0.8)",
-              borderRadius: "6px",
-              border: "1px solid #FF0F87",
-              color: "#F2F2F2",
-              boxShadow: "0 0 10px #FF004C",
-            }}
-          />
-
-          {imagePreview && (
-            <div style={{ marginBottom: "20px", textAlign: "center" }}>
+          
+          {imagePreview ? (
+            <div style={{ marginBottom: "20px", position: "relative" }}>
               <img
                 src={imagePreview}
                 alt="Preview"
                 style={{
-                  maxWidth: "80%",
-                  maxHeight: "700px",
-                  objectFit: "contain",
-                  borderRadius: "8px",
-                border: "1px solid #e50914",
+                  width: "100%",
+                  objectFit: "cover",
+                  borderRadius: "12px",
+                  border: "2px solid rgba(255, 15, 135, 0.3)",
                 }}
               />
+              <button
+                type="button"
+                onClick={() => {
+                  setImage(null);
+                  setImagePreview(null);
+                }}
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  right: "10px",
+                  background: "rgba(255, 0, 0, 0.8)",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "32px",
+                  height: "32px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "20px",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "rgba(255, 0, 0, 1)";
+                  e.target.style.transform = "scale(1.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "rgba(255, 0, 0, 0.8)";
+                  e.target.style.transform = "scale(1)";
+                }}
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <div
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              style={{
+                marginBottom: "20px",
+                padding: "40px 20px",
+                border: `2px dashed ${isDragging ? "#FF0F87" : "rgba(255, 255, 255, 0.1)"}`,
+                borderRadius: "12px",
+                background: isDragging ? "rgba(255, 15, 135, 0.1)" : "rgba(255, 255, 255, 0.02)",
+                textAlign: "center",
+                cursor: "pointer",
+                transition: "all 0.3s",
+                position: "relative",
+              }}
+              onClick={() => document.getElementById("image-upload-input")?.click()}
+            >
+              <div style={{ position: "relative", marginBottom: "20px" }}>
+                {/* Stack of photo icons */}
+                <div style={{ position: "relative", width: "80px", height: "80px", margin: "0 auto" }}>
+                  <div style={{
+                    position: "absolute",
+                    top: "8px",
+                    left: "8px",
+                    width: "64px",
+                    height: "64px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                  }} />
+                  <div style={{
+                    position: "absolute",
+                    top: "4px",
+                    left: "4px",
+                    width: "64px",
+                    height: "64px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                  }} />
+                  <div style={{
+                    position: "absolute",
+                    top: "0",
+                    left: "0",
+                    width: "64px",
+                    height: "64px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "32px",
+                  }}>
+                    📷
+                  </div>
+                  {/* Plus button */}
+                  <div style={{
+                    position: "absolute",
+                    bottom: "-5px",
+                    right: "-5px",
+                    width: "32px",
+                    height: "32px",
+                    background: "rgba(255, 15, 135, 0.9)",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    border: "2px solid rgba(255, 255, 255, 0.3)",
+                    boxShadow: "0 2px 8px rgba(255, 15, 135, 0.3)",
+                  }}>
+                    +
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginBottom: "8px", fontSize: "16px", fontWeight: "600", color: "#fff" }}>
+                Upload, drop or paste photo
+              </div>
+              <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)" }}>
+                People, scenes, products — anything
+              </div>
             </div>
           )}
+
+          <input
+            id="image-upload-input"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            style={{ display: "none" }}
+          />
         </form>
       </div>
 
@@ -334,35 +561,42 @@ export default function UploadPage() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          marginTop: "100px",
         }}
       >
-        <h2 style={{ width: "100%", marginTop: "14px", fontSize: "16.8px" }}>
+        <h2 style={{ width: "100%", marginTop: "14px", fontSize: "20px", color: "#000000", fontWeight: "bold" }}>
           Enter the number of prompts (equal to number of questions)
         </h2>
         
         {/* Mode toggle */}
         <div
           style={{
-            display: "flex",
-            gap: "10px",
-            marginBottom: "14px",
-            width: "100%",
+            display: "inline-flex",
+            background: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(255, 15, 135, 0.2)",
+            borderRadius: "999px",
+            padding: "4px",
+            position: "relative",
+            marginBottom: "20px",
           }}
         >
           <button
             type="button"
             onClick={() => setMode("prompts")}
             style={{
-              flex: 1,
-              padding: "7px",
-              background: mode === "prompts" ? "#FF0F87" : "transparent",
-              border: mode === "prompts" ? "1px solid #FF0F87" : "1px solid #F2F2F2",
-              borderRadius: "6px",
-              color: "#F2F2F2",
+              color: mode === "prompts" ? "#fff" : "rgba(242, 242, 242, 0.6)",
+              textDecoration: "none",
+              fontSize: "15px",
+              fontWeight: "600",
+              padding: "10px 24px",
+              borderRadius: "999px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              position: "relative",
+              zIndex: 1,
+              background: mode === "prompts" ? "linear-gradient(135deg, #FF0F87 0%, #ff2b9e 100%)" : "transparent",
+              border: "none",
               cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "bold",
-              boxShadow: mode === "prompts" ? "0 0 10px #FF004C" : undefined,
+              boxShadow: mode === "prompts" ? "0 4px 12px rgba(255, 15, 135, 0.4)" : "none",
             }}
           >
             Prompts
@@ -371,16 +605,19 @@ export default function UploadPage() {
             type="button"
             onClick={() => setMode("questions")}
             style={{
-              flex: 1,
-              padding: "7px",
-              background: mode === "questions" ? "#FF0F87" : "transparent",
-              border: mode === "questions" ? "1px solid #FF0F87" : "1px solid #F2F2F2",
-              borderRadius: "6px",
-              color: "#F2F2F2",
+              color: mode === "questions" ? "#fff" : "rgba(242, 242, 242, 0.6)",
+              textDecoration: "none",
+              fontSize: "15px",
+              fontWeight: "600",
+              padding: "10px 24px",
+              borderRadius: "999px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              position: "relative",
+              zIndex: 1,
+              background: mode === "questions" ? "linear-gradient(135deg, #FF0F87 0%, #ff2b9e 100%)" : "transparent",
+              border: "none",
               cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "bold",
-              boxShadow: mode === "questions" ? "0 0 10px #FF004C" : undefined,
+              boxShadow: mode === "questions" ? "0 4px 12px rgba(255, 15, 135, 0.4)" : "none",
             }}
           >
             Questions
@@ -603,104 +840,335 @@ export default function UploadPage() {
               <button
                 type="button"
                 onClick={handleGenerateQuestions}
-                disabled={generatingQuestions}
+                disabled={generatingQuestions || !topic || !apiKey}
                 style={{
-                  marginTop: "10.5px",
-                  padding: "7px",
+                  marginTop: "16px",
+                  padding: "14px 48px",
                   background: "#FF0F87",
                   border: "1px solid #FF0F87",
-                  borderRadius: "6px",
+                  borderRadius: "999px",
                   color: "#F2F2F2",
-                  cursor: generatingQuestions ? "not-allowed" : "pointer",
-                  fontSize: "16.8px",
-                  fontWeight: "bold",
-                  boxShadow: "0 0 10px #FF004C",
+                  cursor: generatingQuestions || !topic || !apiKey ? "not-allowed" : "pointer",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  width: "100%",
+                  boxShadow: generatingQuestions || !topic || !apiKey ? "0 4px 16px rgba(255, 0, 76, 0.4)" : "0 4px 16px rgba(255, 0, 76, 0.4)",
+                  transition: "all 0.2s",
+                  letterSpacing: "0.01em",
+                  opacity: generatingQuestions || !topic || !apiKey ? "0.6" : "1",
+                }}
+                onMouseEnter={(e) => {
+                  if (!generatingQuestions && topic && apiKey) {
+                    e.target.style.background = "#ff2b9e";
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow = "0 6px 20px rgba(255, 0, 76, 0.6)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!generatingQuestions && topic && apiKey) {
+                    e.target.style.background = "#FF0F87";
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 4px 16px rgba(255, 0, 76, 0.4)";
+                  }
                 }}
               >
-                {generatingQuestions ? "⏳ Generating..." : "🤖 Generate Questions"}
+                {generatingQuestions ? "⏳ Generating..." : !topic ? "⚠️ Please enter topic to generate questions" : "🤖 Generate Questions"}
               </button>
 
-              {/* Questions JSON Preview */}
-              {generatedQuestions && questionsText && (
-                <div style={{ marginTop: "20px" }}>
-                  <h3 style={{ marginBottom: "7px", fontSize: "14px" }}>
-                    📋 Edit Questions (JSON format):
-                  </h3>
-                  {jsonError && (
-                    <div
-                      style={{
-                        padding: "7px",
-                        marginBottom: "7px",
-                        background: "#ff4444",
-                        color: "#fff",
-                        borderRadius: "6px",
-                        fontSize: "12.6px",
-                      }}
-                    >
-                      {jsonError}
-                    </div>
-                  )}
-                  {!jsonError && generatedQuestions && (
-                    <div
-                      style={{
-                        padding: "7px",
-                        marginBottom: "7px",
-                        background: "#FF0F87",
-                        color: "#F2F2F2",
-                        borderRadius: "6px",
-                        fontSize: "12.6px",
-                        boxShadow: "0 0 10px #FF004C",
-                      }}
-                    >
-                      ✅ Valid JSON ({generatedQuestions.length} questions)
-                    </div>
-                  )}
-                  <textarea
-                    value={questionsText}
-                    onChange={handleQuestionsTextChange}
-                    style={{
-                      width: "100%",
-                      minHeight: "280px",
-                      padding: "7px",
-                      fontSize: "14px",
-                      background: jsonError ? "#2d1f1f" : "#1a1a2e",
-                      color: "#fff",
-                      border: jsonError ? "2px solid #ff4444" : "1px solid #FF0F87",
-                      borderRadius: "6px",
-                      fontFamily: "monospace",
-                      overflow: "auto",
-                      resize: "vertical",
+              {/* Questions UI Editor */}
+              <div style={{ marginTop: "20px", width: "100%" }}>
+                <h3 style={{ marginBottom: "16px", fontSize: "16px", fontWeight: "600", color: "#fff" }}>
+                  📋 Edit Questions:
+                </h3>
+                
+                {generatedQuestions && generatedQuestions.length > 0 ? (
+                  <div 
+                    className="questions-scroll-container"
+                    style={{ 
+                      maxHeight: "400px", 
+                      overflowY: "auto", 
+                      paddingRight: "10px",
+                      // Custom scrollbar styles for Firefox
+                      background: "rgba(20,20,20,0.8)",
+                      borderRadius: "12px",
+                      scrollbarWidth: "thin",
+                      scrollbarColor: "rgba(255, 15, 135, 0.5) rgba(255, 255, 255, 0.05)",
                     }}
-                  />
-                  <p style={{ marginTop: "5px", fontSize: "18px", color: "#888" }}>
-                    💡 Edit the JSON above. Each question needs: id, question, options (4 items), answer
-                  </p>
-                </div>
-              )}
+                  >
+                  {generatedQuestions.map((q, qIndex) => (
+                    <div
+                      key={qIndex}
+                      style={{
+                        marginBottom: "24px",
+                        padding: "20px",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        border: "3px solid rgba(255, 15, 135, 0.2)",
+                        borderRadius: "12px",
+                      }}
+                    >
+                      <div style={{ fontSize: "14px", fontWeight: "600", color: "#FF0F87", marginBottom: "12px" }}>
+                        Question {qIndex + 1}:
+                      </div>
+                      
+                      {/* Question text input */}
+                      <input
+                        type="text"
+                        value={q.question}
+                        onChange={(e) => handleQuestionTextChange(qIndex, e.target.value)}
+                        placeholder="Enter your question..."
+                        style={{
+                          width: "97%",
+                          padding: "12px",
+                          marginBottom: "16px",
+                          fontSize: "14px",
+                          borderRadius: "8px",
+                          border: "1px solid rgba(255, 15, 135, 0.2)",
+                          background: "rgba(255, 255, 255, 0.04)",
+                          color: "#fff",
+                          transition: "all 0.2s",
+                          outline: "none",
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = "#FF0F87";
+                          e.target.style.background = "rgba(255, 255, 255, 0.06)";
+                          e.target.style.boxShadow = "0 0 0 3px rgba(255, 15, 135, 0.1)";
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = "rgba(255, 15, 135, 0.2)";
+                          e.target.style.background = "rgba(255, 255, 255, 0.04)";
+                          e.target.style.boxShadow = "none";
+                        }}
+                      />
+                      
+                      {/* Options */}
+                      {q.options && q.options.map((option, oIndex) => (
+                        <div key={oIndex} style={{ marginBottom: "10px", display: "flex", alignItems: "center", gap: "10px" }}>
+                          <input
+                            type="radio"
+                            name={`answer-${qIndex}`}
+                            checked={q.answer === option}
+                            onChange={() => handleAnswerChange(qIndex, option)}
+                            style={{
+                              width: "18px",
+                              height: "18px",
+                              cursor: "pointer",
+                            }}
+                          />
+                          <input
+                            type="text"
+                            value={option}
+                            onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                            placeholder={`Option ${String.fromCharCode(65 + oIndex)}`}
+                            style={{
+                              flex: 1,
+                              padding: "10px",
+                              fontSize: "14px",
+                              borderRadius: "8px",
+                              border: "1px solid rgba(255, 15, 135, 0.2)",
+                              background: "rgba(255, 255, 255, 0.04)",
+                              color: "#fff",
+                              transition: "all 0.2s",
+                              outline: "none",
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = "#FF0F87";
+                              e.target.style.background = "rgba(255, 255, 255, 0.06)";
+                              e.target.style.boxShadow = "0 0 0 3px rgba(255, 15, 135, 0.1)";
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = "rgba(255, 15, 135, 0.2)";
+                              e.target.style.background = "rgba(255, 255, 255, 0.04)";
+                              e.target.style.boxShadow = "none";
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                  </div>
+                ) : (
+                  <div style={{ 
+                    padding: "20px", 
+                    textAlign: "center", 
+                    color: "rgba(242, 242, 242, 0.5)",
+                    fontSize: "14px"
+                  }}>
+                    No questions yet. Use "Generate Questions" to create them.
+                  </div>
+                )}
+              </div>
             </>
           )}
 
           {/* Submit button */}
           <button
             type="submit"
-            disabled={loading || generatingQuestions}
+            disabled={loading || generatingQuestions || !isFormValid}
             style={{
-              marginTop: "7px",
-              padding: "5.6px",
+              marginTop: "16px",
+              padding: "14px 48px",
               background: "#FF0F87",
               border: "1px solid #FF0F87",
-              borderRadius: "6px",
+              borderRadius: "999px",
               color: "#F2F2F2",
-              cursor: loading || generatingQuestions ? "not-allowed" : "pointer",
-              fontSize: "40px",
+              cursor: loading || generatingQuestions || !isFormValid ? "not-allowed" : "pointer",
+              fontSize: "16px",
+              fontWeight: "600",
               width: "100%",
-              boxShadow: "0 0 10px #FF004C",
+              boxShadow: loading || generatingQuestions || !isFormValid ? "0 4px 16px rgba(255, 0, 76, 0.4)" : "0 4px 16px rgba(255, 0, 76, 0.4)",
+              transition: "all 0.2s",
+              letterSpacing: "0.01em",
+              opacity: loading || generatingQuestions || !isFormValid ? "0.6" : "1",
+            }}
+            onMouseEnter={(e) => {
+              if (!loading && !generatingQuestions && isFormValid) {
+                e.target.style.background = "#ff2b9e";
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 6px 20px rgba(255, 0, 76, 0.6)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!loading && !generatingQuestions && isFormValid) {
+                e.target.style.background = "#FF0F87";
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 16px rgba(255, 0, 76, 0.4)";
+              }
             }}
           >
-            {loading ? "⏳ Uploading..." : "Submit"}
+            {loading ? "⏳ Uploading..." : !isFormValid ? "⚠️ Please fill all required fields correctly" : "Submit"}
           </button>
         </form>
       </div>
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.9)",
+            backdropFilter: "blur(10px)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "24px",
+          }}
+        >
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid rgba(255, 15, 135, 0.3)",
+              borderRadius: "16px",
+              maxWidth: "600px",
+              width: "100%",
+              backdropFilter: "blur(20px)",
+              boxShadow: "0 8px 32px rgba(255, 15, 135, 0.3)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "24px 32px",
+                borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "24px",
+                  fontWeight: "600",
+                  background: "linear-gradient(135deg, #FF0F87 0%, #ff2b9e 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                Upload Failed
+              </h2>
+              <button
+                onClick={() => setShowErrorModal(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "rgba(242, 242, 242, 0.6)",
+                  fontSize: "24px",
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                  borderRadius: "999px",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "rgba(255, 15, 135, 0.1)";
+                  e.target.style.color = "#fff";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "transparent";
+                  e.target.style.color = "rgba(242, 242, 242, 0.6)";
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ padding: "32px" }}>
+              <div
+                style={{
+                  fontSize: "16px",
+                  color: "#F2F2F2",
+                  lineHeight: "1.6",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {errorMessage}
+              </div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+                padding: "24px 32px",
+                borderTop: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <button
+                onClick={() => setShowErrorModal(false)}
+                style={{
+                  padding: "14px 48px",
+                  background: "#FF0F87",
+                  border: "1px solid #FF0F87",
+                  borderRadius: "999px",
+                  color: "#F2F2F2",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 16px rgba(255, 0, 76, 0.4)",
+                  transition: "all 0.2s",
+                  letterSpacing: "0.01em",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "#ff2b9e";
+                  e.target.style.transform = "translateY(-2px)";
+                  e.target.style.boxShadow = "0 6px 20px rgba(255, 0, 76, 0.6)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "#FF0F87";
+                  e.target.style.transform = "translateY(0)";
+                  e.target.style.boxShadow = "0 4px 16px rgba(255, 0, 76, 0.4)";
+                }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+    </>
   );
 }

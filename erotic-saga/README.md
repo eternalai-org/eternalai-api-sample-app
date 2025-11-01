@@ -1,8 +1,6 @@
-# Erotic Saga - AI Millionaire Quiz Game
+# 🎮 Erotic Saga - AI Millionaire Quiz Game
 
 An interactive quiz game with the ability to create characters and AI‑generated images.
-
-Live Review [Erotic Saga](https://margot-nonflagellate-hitchily.ngrok-free.dev/)
 
 ## 📋 Project Overview
 

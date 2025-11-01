@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "question": "What is the approximate percentage of Earth's surface that is covered by water?",
+    "options": [
+      "70%",
+      "50%",
+      "80%",
+      "60%"
+    ],
+    "answer": "70%"
+  },
+  {
+    "id": 2,
+    "question": "In physics, which principle states that an object at rest stays at rest and an object in motion stays in motion with the same speed and direction unless acted upon by a force?",
+    "options": [
+      "Newton's First Law",
+      "Law of Universal Gravitation",
+      "Conservation of Energy",
+      "Bernoulli's Principle"
+    ],
+    "answer": "Newton's First Law"
+  },
+  {
+    "id": 3,
+    "question": "According to the Big Bang theory, what was the state of the universe immediately after its formation?",
+    "options": [
+      "A dense, hot plasma",
+      "A cold, dark void",
+      "A collection of scattered particles",
+      "A stable equilibrium"
+    ],
+    "answer": "A dense, hot plasma"
+  }
+]

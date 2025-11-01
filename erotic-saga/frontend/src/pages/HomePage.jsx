@@ -10,6 +10,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [characters, setCharacters] = useState([]);
   const [showCharacters, setShowCharacters] = useState(false);
+  const [currentMode, setCurrentMode] = useState("startGame"); // "startGame" or "addCharacter"
 
   // ✅ Verify admin password
   const handleVerifyPassword = async () => {
@@ -69,6 +70,11 @@ export default function HomePage() {
     })();
   }, []);
 
+  // Auto-load characters on mount
+  React.useEffect(() => {
+    handleStartGame();
+  }, []);
+
   // ✅ Main interface
   return (
     <div
@@ -85,49 +91,74 @@ export default function HomePage() {
         alignItems: "center",
         justifyContent: "center",
         padding: "1rem",
+        position: "relative",
       }}
     >
       <h1 style={{ fontSize: "2.8rem", marginTop: "0.7rem", color: "#C0C0C0" }}>
         🎮 Erotic Saga
       </h1>
 
+      {/* --- Mode switch button (top right) --- */}
+      {!showPasswordBox && (
+        <button
+          onClick={() => {
+            if (currentMode === "startGame") {
+              setShowCharacters(false);
+              setShowPasswordBox(true);
+              setCurrentMode("addCharacter");
+            } else {
+              setShowPasswordBox(false);
+              setShowCharacters(false);
+              setCurrentMode("startGame");
+              handleStartGame();
+            }
+          }}
+          style={{
+            position: "absolute",
+            color: "#ffffff",
+            top: "20px",
+            right: "20px",
+            padding: "14px 48px",
+            background: currentMode === "startGame" ? "#FF0F87" : "#4CAF50",
+            border: `1px solid ${currentMode === "startGame" ? "#FF0F87" : "#4CAF50"}`,
+            borderRadius: "999px",
+            fontSize: "16px",
+            fontWeight: "600",
+            cursor: "pointer",
+            boxShadow: currentMode === "startGame" ? "0 4px 16px rgba(255, 0, 76, 0.4)" : "0 4px 16px rgba(46, 125, 50, 0.4)",
+            zIndex: 1000,
+            transition: "all 0.2s",
+            letterSpacing: "0.01em",
+          }}
+          onMouseEnter={(e) => {
+            if (currentMode === "startGame") {
+              e.target.style.background = "#ff2b9e";
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 6px 20px rgba(255, 0, 76, 0.6)";
+            } else {
+              e.target.style.background = "#66bb6a";
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 6px 20px rgba(46, 125, 50, 0.6)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentMode === "startGame") {
+              e.target.style.background = "#FF0F87";
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "0 4px 16px rgba(255, 0, 76, 0.4)";
+            } else {
+              e.target.style.background = "#4CAF50";
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "0 4px 16px rgba(46, 125, 50, 0.4)";
+            }
+          }}
+        >
+          {currentMode === "startGame" ? "➕ Add New Character" : "🎯 Start Game"}
+        </button>
+      )}
+
       {/* --- Loading --- */}
       {loading && <p>⏳ Processing...</p>}
-
-      {/* --- When no selection yet --- */}
-      {!showPasswordBox && !showCharacters && !loading && (
-        <div style={{ display: "flex", gap: "1.4rem" }}>
-          <button
-            onClick={() => setShowPasswordBox(true)}
-            style={{
-              padding: "0.7rem 1.4rem",
-              background: "#FF0F87",
-              border: "1px solid #FF0F87",
-              borderRadius: "8px",
-              fontSize: "1.68rem",
-              cursor: "pointer",
-              boxShadow: "0 0 10px #FF004C",
-            }}
-          >
-            ➕ Add New Character
-          </button>
-
-          <button
-            onClick={handleStartGame}
-            style={{
-              padding: "0.7rem 1.4rem",
-              background: "#FF0F87",
-              border: "1px solid #FF0F87",
-              borderRadius: "8px",
-              fontSize: "1.68rem",
-              cursor: "pointer",
-              boxShadow: "0 0 10px #FF004C",
-            }}
-          >
-            🎯 Start Game
-          </button>
-        </div>
-      )}
 
       {/* --- Password input box --- */}
       {showPasswordBox && (
@@ -150,44 +181,84 @@ export default function HomePage() {
               }
             }}
             style={{
-              padding: "7px",
-              fontSize: "1.4rem",
-              borderRadius: "6px",
+              padding: "12px 16px",
+              fontSize: "15px",
+              borderRadius: "10px",
               width: "280px",
-              border: "1px solid #FF0F87",
-              background: "rgba(20,20,20,0.8)",
+              border: "1px solid rgba(255, 15, 135, 0.12)",
+              background: "rgba(20, 20, 20, 0.8)",
               color: "#F2F2F2",
               outline: "none",
-              boxShadow: "0 0 10px #FF004C",
+              fontFamily: "inherit",
+              transition: "all 0.2s",
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#FF0F87";
+              e.target.style.background = "rgba(20, 20, 20, 0.95)";
+              e.target.style.boxShadow = "0 0 0 3px rgba(255, 15, 135, 0.1)";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = "rgba(255, 15, 135, 0.12)";
+              e.target.style.background = "rgba(20, 20, 20, 0.8)";
+              e.target.style.boxShadow = "none";
             }}
           />
           <div style={{ display: "flex", gap: "1rem" }}>
             <button
               onClick={handleVerifyPassword}
               style={{
-                padding: "0.42rem 1.05rem",
+                padding: "14px 48px",
                 background: "#FF0F87",
                 border: "1px solid #FF0F87",
-                borderRadius: "6px",
+                borderRadius: "999px",
                 color: "#F2F2F2",
                 cursor: "pointer",
-                fontSize: "1.4rem",
-                boxShadow: "0 0 10px #FF004C",
+                fontSize: "16px",
+                fontWeight: "600",
+                boxShadow: "0 4px 16px rgba(255, 0, 76, 0.4)",
+                transition: "all 0.2s",
+                letterSpacing: "0.01em",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = "#ff2b9e";
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 6px 20px rgba(255, 0, 76, 0.6)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "#FF0F87";
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 16px rgba(255, 0, 76, 0.4)";
               }}
             >
               ✅ Confirm
             </button>
 
             <button
-              onClick={() => setShowPasswordBox(false)}
+              onClick={() => {
+                setShowPasswordBox(false);
+                setCurrentMode("startGame");
+                handleStartGame();
+              }}
               style={{
-                padding: "0.42rem 1.05rem",
+                padding: "14px 48px",
                 background: "transparent",
-                border: "1px solid #F2F2F2",
-                borderRadius: "6px",
+                border: "1px solid rgba(242, 242, 242, 0.12)",
+                borderRadius: "999px",
                 color: "#F2F2F2",
                 cursor: "pointer",
-                fontSize: "1.4rem",
+                fontSize: "16px",
+                fontWeight: "600",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = "#FF0F87";
+                e.target.style.background = "rgba(255, 15, 135, 0.1)";
+                e.target.style.color = "#fff";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = "rgba(242, 242, 242, 0.12)";
+                e.target.style.background = "transparent";
+                e.target.style.color = "#F2F2F2";
               }}
             >
               🔙 Back
@@ -214,11 +285,27 @@ export default function HomePage() {
               key={char.id}
               onClick={() => handleSelectCharacter(char.id)}
               style={{
-                background: "#1f1f2e",
-                borderRadius: "10px",
+                background: "rgba(255, 255, 255, 0.02)",
+                border: "1px solid rgba(255, 15, 135, 0.2)",
+                borderRadius: "16px",
                 padding: "1rem",
                 textAlign: "center",
                 cursor: "pointer",
+                overflow: "hidden",
+                backdropFilter: "blur(10px)",
+                boxShadow: "0 0 40px rgba(255, 15, 135, 0.15)",
+                transition: "all 0.3s ease",
+                willChange: "transform",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = "#FF0F87";
+                e.target.style.boxShadow = "0 0 60px rgba(255, 15, 135, 0.3)";
+                e.target.style.transform = "translateY(-4px)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = "rgba(255, 15, 135, 0.2)";
+                e.target.style.boxShadow = "0 0 40px rgba(255, 15, 135, 0.15)";
+                e.target.style.transform = "translateY(0)";
               }}
             >
               <img
@@ -228,30 +315,16 @@ export default function HomePage() {
                   width: "100%",
                   height: "350px",
                   objectFit: "cover",
-                  borderRadius: "8px",
+                  display: "block",
                 }}
               />
-              <h3 style={{ marginTop: "0.56rem", color: "#fff", fontSize: "1.2rem" }}>{char.name}</h3>
+              <div style={{ padding: "1rem" }}>
+                <h3 style={{ margin: 0, color: "#fff", fontSize: "1.2rem", fontWeight: "600" }}>
+                  {char.name}
+                </h3>
+              </div>
             </div>
           ))}
-
-          <button
-            onClick={() => setShowCharacters(false)}
-            style={{
-              position: "absolute",
-              top: "20px",
-              left: "20px",
-              background: "#555",
-              border: "none",
-              color: "#fff",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "1.05rem",
-            }}
-          >
-            🔙 Back to Home
-          </button>
         </div>
       )}
     </div>

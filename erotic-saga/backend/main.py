@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, Form
+from fastapi import FastAPI, UploadFile, Form, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from utils.ai_api import call_ai_edit_image, generate_questions
 from utils.file_manager import save_image_file, encode_image_base64, image_to_base64_to_front_end, load_characters, save_characters, UPLOAD_DIR
@@ -48,10 +48,10 @@ async def verify_password(password: str = Form(...)):
 @app.get("/api/prompts")
 async def get_prompts():
     """
-    Return list of prompt suggestions from prompts.json
+    Return list of prompt suggestions from suggested_prompts.json
     """
     import json
-    prompts_file = "prompts.json"
+    prompts_file = "suggested_prompts.json"
     try:
         with open(prompts_file, "r", encoding="utf-8") as f:
             prompts = json.load(f)
@@ -59,7 +59,7 @@ async def get_prompts():
     except FileNotFoundError:
         return {"prompts": []}
     except Exception as e:
-        print(f"❌ Error reading prompts.json: {e}")
+        print(f"❌ Error reading suggested_prompts.json: {e}")
         return {"prompts": []}
 
 
@@ -98,11 +98,14 @@ async def get_characters():
     return characters
 
 
+
+
 # =====================================================
 # 🧠 API: Upload + Generate images + Save character
 # =====================================================
 @app.post("/api/upload")
 async def upload(
+    background_tasks: BackgroundTasks,
     name: str = Form(...),
     api_key: str = Form(...),
     prompts: List[str] = Form(...),
@@ -113,6 +116,50 @@ async def upload(
     Receive character information (name, base image, prompts, api_key, questions)
     → Save the new character and generate corresponding images using AI
     """
+    import json
+    validated_questions = None
+    
+    # Validate questions JSON if provided (BEFORE generating images)
+    if questions_json:
+        try:
+            questions = json.loads(questions_json)
+            
+            # Check if it's an array
+            if not isinstance(questions, list):
+                raise HTTPException(status_code=400, detail="Questions must be an array")
+            
+            # Validate each question
+            for idx, q in enumerate(questions, start=1):
+                # Check required fields
+                if not isinstance(q, dict):
+                    raise HTTPException(status_code=400, detail=f"Question {idx} must be an object")
+                
+                required_fields = ["id", "question", "options", "answer"]
+                for field in required_fields:
+                    if field not in q:
+                        raise HTTPException(status_code=400, detail=f"Question {idx} missing required field: {field}")
+                
+                # Validate options
+                if not isinstance(q["options"], list):
+                    raise HTTPException(status_code=400, detail=f"Question {idx}: options must be an array")
+                
+                if len(q["options"]) != 4:
+                    raise HTTPException(status_code=400, detail=f"Question {idx}: must have exactly 4 options")
+                
+                # Validate that answer is one of the options
+                if q["answer"] not in q["options"]:
+                    raise HTTPException(status_code=400, detail=f"Question {idx}: answer '{q['answer']}' must be one of the options")
+            
+            validated_questions = questions
+            print(f"✅ All {len(questions)} questions validated successfully")
+            
+        except json.JSONDecodeError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid JSON format: {str(e)}")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Error validating questions: {str(e)}")
+
     # Ensure the uploads directory exists
     os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -138,50 +185,15 @@ async def upload(
     with open(image_path, "wb") as f:
         f.write(await image.read())
 
-    print(api_key)
-    # Generate images through the AI API
-    for idx, prompt in enumerate(prompts, start=1):
-        print(f"🎨 Processing prompt {idx}/{len(prompts)}: {prompt[:60]}...")
-
-        result_url = call_ai_edit_image(api_key, image_path, prompt)
-
-        if not result_url:
-            print(f"⚠️ Prompt {idx} failed, skipping.")
-            continue
-
+    # Save questions JSON and character info first
+    if validated_questions:
         try:
-            # Send request to download the result image
-            res = requests.get(result_url, timeout=60)
-            res.raise_for_status()
-
-            # Rename the file sequentially: 1.jpg, 2.jpg, ...
-            new_filename = f"{idx}{image_ext}"
-            new_path = os.path.join(character_folder, new_filename)
-
-            with open(new_path, "wb") as out_file:
-                out_file.write(res.content)
-
-            print(f"✅ Image {idx} saved at: {new_path}")
-
-            # Update image_path to use the latest image next time
-            image_path = new_path
-
-        except Exception as e:
-            print(f"❌ Error downloading image {idx}: {e}")
-            continue
-
-    
-    # Save questions JSON if provided
-    if questions_json:
-        try:
-            import json
-            questions = json.loads(questions_json)
-            # edit id to increase from 1
-            for idx, q in enumerate(questions, start=1):
+            # Edit id to increase from 1
+            for idx, q in enumerate(validated_questions, start=1):
                 q['id'] = idx
             questions_path = os.path.join(character_folder, "questions.json")
             with open(questions_path, "w", encoding="utf-8") as f:
-                json.dump(questions, f, ensure_ascii=False, indent=2)
+                json.dump(validated_questions, f, ensure_ascii=False, indent=2)
             print(f"✅ Questions saved to {questions_path}")
         except Exception as e:
             print(f"⚠️ Error saving questions: {e}")
@@ -197,10 +209,45 @@ async def upload(
     characters.append(new_character)
     save_characters(characters)
 
+    # Define background task for generating images
+    def generate_images_background():
+        """Generate images in the background to avoid blocking other requests"""
+        # Generate images through the AI API
+        # Use the original image for every prompt (do not update image_path)
+        for idx, prompt in enumerate(prompts, start=1):
+            print(f"🎨 Processing prompt {idx}/{len(prompts)}: {prompt[:60]}...")
+
+            # Always use the original image for each call
+            result_url = call_ai_edit_image(api_key, original_image, prompt)
+
+            if not result_url:
+                print(f"⚠️ Prompt {idx} failed, skipping.")
+                continue
+
+            try:
+                # Send request to download the result image
+                res = requests.get(result_url, timeout=60)
+                res.raise_for_status()
+
+                # Rename the file sequentially: 1.jpg, 2.jpg, ...
+                new_filename = f"{idx}{image_ext}"
+                new_path = os.path.join(character_folder, new_filename)
+
+                with open(new_path, "wb") as out_file:
+                    out_file.write(res.content)
+
+                print(f"✅ Image {idx} saved at: {new_path}")
+
+            except Exception as e:
+                print(f"❌ Error downloading image {idx}: {e}")
+                continue
+    
+    # Add background task
+    background_tasks.add_task(generate_images_background)
+
     return {
-        "message": f"✅ Character '{name}' has been added and images generated successfully!",
-        "character": new_character,
-        "images": GENERATED_IMAGES
+        "message": f"✅ Character '{name}' has been added successfully! Images are being generated in the background.",
+        "character": new_character
     }
 
 

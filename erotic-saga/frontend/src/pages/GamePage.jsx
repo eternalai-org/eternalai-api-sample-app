@@ -71,7 +71,22 @@ export default function GamePage() {
   if (!question && !isWin) return <p>Loading...</p>;
 
   return (
-    <>
+    <div
+      style={{
+        width: "100vw",
+        height: "100vh",
+        position: "relative",
+        background: "#0a0a1a",
+        backgroundImage: bg ? `url(${bg})` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "auto",
+      }}
+    >
       {showGameOver && (
         <div
           style={{
@@ -106,15 +121,27 @@ export default function GamePage() {
               onClick={() => (window.location.href = "/")}
               style={{
                 marginTop: "20px",
-                padding: "0.8rem 1.6rem",
-                borderRadius: "8px",
+                padding: "14px 48px",
+                borderRadius: "999px",
                 border: "1px solid #FF0F87",
                 backgroundColor: "#FF0F87",
                 color: "#F2F2F2",
-                fontSize: "1.6rem",
-                fontWeight: 700,
+                fontSize: "16px",
+                fontWeight: "600",
                 cursor: "pointer",
-                boxShadow: "0 0 12px #FF004C",
+                boxShadow: "0 4px 16px rgba(255, 0, 76, 0.4)",
+                transition: "all 0.2s",
+                letterSpacing: "0.01em",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = "#ff2b9e";
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 6px 20px rgba(255, 0, 76, 0.6)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "#FF0F87";
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 16px rgba(255, 0, 76, 0.4)";
               }}
             >
               OK
@@ -129,12 +156,24 @@ export default function GamePage() {
           top: "20px",
           left: "20px",
           background: "transparent",
-          border: "1px solid #F2F2F2",
+          border: "1px solid rgba(242, 242, 242, 0.12)",
           color: "#F2F2F2",
-          padding: "6px 12px",
-          borderRadius: "6px",
+          padding: "10px 20px",
+          borderRadius: "999px",
           cursor: "pointer",
-          fontSize: "1.05rem",
+          fontSize: "15px",
+          fontWeight: "600",
+          transition: "all 0.2s",
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.borderColor = "#FF0F87";
+          e.target.style.background = "rgba(255, 15, 135, 0.1)";
+          e.target.style.color = "#fff";
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.borderColor = "rgba(242, 242, 242, 0.12)";
+          e.target.style.background = "transparent";
+          e.target.style.color = "#F2F2F2";
         }}
       >
         ⬅️ Back to Home
@@ -144,7 +183,7 @@ export default function GamePage() {
         style={{
           backgroundColor: "#222",
           backgroundImage: bg ? `url(${bg})` : undefined,
-          backgroundSize: "cover",
+          backgroundSize: "full",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           borderRadius: "12px",
@@ -235,17 +274,28 @@ export default function GamePage() {
             <button
               onClick={handleAnswer}
               style={{
-                marginTop: "1.05rem",
-                padding: "0.56rem 1.05rem",
-                borderRadius: "6px",
+                marginTop: "16px",
+                padding: "14px 48px",
+                borderRadius: "999px",
                 border: "1px solid #FF0F87",
                 backgroundColor: "#FF0F87",
                 color: "#F2F2F2",
-                fontSize: "1.4rem",
+                fontSize: "16px",
                 fontWeight: "600",
                 cursor: "pointer",
-                transition: "background 0.3s",
-                boxShadow: "0 0 10px #FF004C",
+                transition: "all 0.2s",
+                boxShadow: "0 4px 16px rgba(255, 0, 76, 0.4)",
+                letterSpacing: "0.01em",
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = "#ff2b9e";
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 6px 20px rgba(255, 0, 76, 0.6)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "#FF0F87";
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 16px rgba(255, 0, 76, 0.4)";
               }}
             >
               Submit
@@ -253,6 +303,6 @@ export default function GamePage() {
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }
